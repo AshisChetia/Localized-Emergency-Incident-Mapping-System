@@ -1,6 +1,10 @@
-import bcrypt from "bcryptjs"
-import jwt from "jsonwebtoken"
-import db from "../config/db.js"
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+
+// ── Import Models instead of DB ──
+import User from "../models/User.js";
+import Authority from "../models/Authority.js";
+import Admin from "../models/Admin.js";
 
 // ─────────────────────────────────────────
 // HELPER: Generate JWT Token
@@ -15,58 +19,45 @@ const generateToken = (id, role) => {
 
 // ── Register User ──────────────────────────
 export const registerUser = async (req, res) => {
-  const { name, email, password, pincode, number } = req.body;
+  const { name, email, password, pincode } = req.body;
 
   try {
-    // Check all fields
-    if (!name || !email || !password || !pincode || !number) {
+    if (!name || !email || !password || !pincode) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Check if user already exists
-    const [existingUser] = await db.query(
-      "SELECT id FROM users WHERE email = ?",
-      [email]
-    );
-
-    if (existingUser.length > 0) {
+    // Check if user already exists using Model
+    const userExists = await User.emailExists(email);
+    if (userExists) {
       return res.status(409).json({ message: "Email already registered" });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert user into DB
-    try {
-      console.log("Attempting SQL Insert...");
-      const [result] = await db.query(
-        "INSERT INTO users (name, email, password, pincode, number) VALUES (?, ?, ?, ?, ?)",
-        [name, email, hashedPassword, pincode, number]
-      );
-      
-      // Generate token
-      const token = generateToken(result.insertId, "user"); 
-      
-      return res.status(201).json({
-        message: "User registered successfully",
-        token,
-        user: {
-          id: result.insertId,
-          name,
-          email,
-          pincode,
-          role: "user",
-        },
-      });
-    } catch (dbError) {
-      console.error("EXACT SQL ERROR:", dbError);
-      return res.status(500).json({ message: "Database Error", error: dbError.message });
-    }
+    // Insert user using Model
+    const result = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      pincode,
+    });
 
+    const token = generateToken(result.insertId, "user");
 
+    return res.status(201).json({
+      message: "User registered successfully",
+      token,
+      user: {
+        id: result.insertId,
+        name,
+        email,
+        pincode,
+        role: "user",
+      },
+    });
   } catch (error) {
     console.error("Register User Error:", error);
-    return res.status(500).json({ message: "Server error during registration" });
+    return res.status(500).json({ message: "Server error during registration", errorDetails: error.message });
   }
 };
 
@@ -79,26 +70,18 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // Find user
-    const [users] = await db.query(
-      "SELECT * FROM users WHERE email = ?",
-      [email]
-    );
+    // Find user using Model
+    const user = await User.findByEmail(email);
 
-    if (users.length === 0) {
+    if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    const user = users[0];
-
-    // Compare password
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Generate token
     const token = generateToken(user.id, "user");
 
     return res.status(200).json({
@@ -131,30 +114,27 @@ export const registerAuthority = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Check if email already exists in authorities table
-    const [existingAuthority] = await db.query(
-      "SELECT id FROM authorities WHERE email = ?",
-      [email]
-    );
-
-    if (existingAuthority.length > 0) {
+    // Check if email already exists using Model
+    const authorityExists = await Authority.emailExists(email);
+    if (authorityExists) {
       return res.status(409).json({
         message: "An authority with this email already exists or has a pending request",
       });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert authority with is_approved = false (pending)
-    await db.query(
-      "INSERT INTO authorities (name, email, password, pincode, department, is_approved) VALUES (?, ?, ?, ?, ?, ?)",
-      [name, email, hashedPassword, pincode, department, false]
-    );
+    // Insert authority using Model
+    await Authority.create({
+      name,
+      email,
+      password: hashedPassword,
+      pincode,
+      department,
+    });
 
     return res.status(201).json({
-      message:
-        "Registration request submitted successfully. Please wait for Super Admin approval before logging in.",
+      message: "Registration request submitted successfully. Please wait for Super Admin approval before logging in.",
     });
   } catch (error) {
     console.error("Register Authority Error:", error);
@@ -171,34 +151,24 @@ export const loginAuthority = async (req, res) => {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // Find authority
-    const [authorities] = await db.promise().query(
-      "SELECT * FROM authorities WHERE email = ?",
-      [email]
-    );
+    // Find authority using Model
+    const authority = await Authority.findByEmail(email);
 
-    if (authorities.length === 0) {
+    if (!authority) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    const authority = authorities[0];
-
-    // Check if approved by Super Admin
     if (!authority.is_approved) {
       return res.status(403).json({
-        message:
-          "Your account is pending Super Admin approval. Please check back later.",
+        message: "Your account is pending Super Admin approval. Please check back later.",
       });
     }
 
-    // Compare password
     const isMatch = await bcrypt.compare(password, authority.password);
-
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Generate token
     const token = generateToken(authority.id, "authority");
 
     return res.status(200).json({
@@ -232,26 +202,18 @@ export const loginAdmin = async (req, res) => {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // Find admin
-    const [admins] = await db.promise().query(
-      "SELECT * FROM admins WHERE email = ?",
-      [email]
-    );
+    // Find admin using Model
+    const admin = await Admin.findByEmail(email);
 
-    if (admins.length === 0) {
+    if (!admin) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    const admin = admins[0];
-
-    // Compare password
     const isMatch = await bcrypt.compare(password, admin.password);
-
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Generate token
     const token = generateToken(admin.id, "admin");
 
     return res.status(200).json({
@@ -270,40 +232,32 @@ export const loginAdmin = async (req, res) => {
 };
 
 // ── Get Current Logged-In User Profile ──────
-// Works for all three roles based on JWT token
 export const getMe = async (req, res) => {
   const { id, role } = req.user;
 
   try {
-    let query = "";
-    let tableName = "";
+    let userRecord = null;
 
+    // Fetch from correct model based on role
     if (role === "user") {
-      tableName = "users";
-      query = "SELECT id, name, email, pincode FROM users WHERE id = ?";
+      userRecord = await User.findById(id);
     } else if (role === "authority") {
-      tableName = "authorities";
-      query =
-        "SELECT id, name, email, pincode, department FROM authorities WHERE id = ?";
+      userRecord = await Authority.findById(id);
     } else if (role === "admin") {
-      tableName = "admins";
-      query = "SELECT id, email FROM admins WHERE id = ?";
+      userRecord = await Admin.findById(id);
     } else {
       return res.status(403).json({ message: "Invalid role" });
     }
 
-    const [rows] = await db.promise().query(query, [id]);
-
-    if (rows.length === 0) {
+    if (!userRecord) {
       return res.status(404).json({ message: "User not found" });
     }
 
     return res.status(200).json({
-      user: { ...rows[0], role },
+      user: { ...userRecord, role },
     });
   } catch (error) {
     console.error("GetMe Error:", error);
     return res.status(500).json({ message: "Server error fetching profile" });
   }
 };
-
