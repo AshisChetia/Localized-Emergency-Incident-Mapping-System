@@ -1,13 +1,5 @@
 // ─────────────────────────────────────────
 // pages/authority/AuthorityDashboard.jsx
-// Authority dashboard. Shows:
-// - Stats summary cards
-// - Monthly chart (StatsChart)
-// - All reports in authority's pincode
-//   with filter tabs + search
-// - Report detail modal (ReportDetailCard)
-// Uses: ReportCard, ReportDetailCard,
-//       StatsChart, Loader, StatusBadge
 // ─────────────────────────────────────────
 
 import { useState, useEffect, useCallback } from "react";
@@ -23,31 +15,19 @@ import StatsChart       from "../../components/StatsChart";
 import Loader           from "../../components/Loader";
 import StatusBadge      from "../../components/StatusBadge";
 import toast            from "react-hot-toast";
+import { colors, fonts } from "../../styles/designTokens";
 import {
-  ShieldCheck,
-  FileText,
-  Clock,
-  CheckCircle,
-  RefreshCw,
-  Search,
-  X,
-  Inbox,
-  BarChart2,
-  MapPin,
-  ChevronDown,
-  List,
-  LayoutGrid,
-  SlidersHorizontal,
+  ShieldCheck, FileText, Clock, CheckCircle, RefreshCw,
+  Search, X, Inbox, BarChart2, MapPin, ChevronDown,
+  List, LayoutGrid, SlidersHorizontal, Building2
 } from "lucide-react";
 
-// ── Filter tab config ────────────────────
 const TABS = [
-  { key: "all",      label: "All"      },
+  { key: "all",      label: "All Reports" },
   { key: "pending",  label: "Pending"  },
   { key: "resolved", label: "Resolved" },
 ];
 
-// ── Sort options ─────────────────────────
 const SORT_OPTIONS = [
   { key: "newest", label: "Newest First"  },
   { key: "oldest", label: "Oldest First"  },
@@ -57,28 +37,35 @@ const SORT_OPTIONS = [
 const AuthorityDashboard = () => {
   const { user } = useAuth();
 
-  // ── Data state ──────────────────────────
   const [reports,      setReports]      = useState([]);
   const [monthlyStats, setMonthlyStats] = useState([]);
   const [loading,      setLoading]      = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
   const [refreshing,   setRefreshing]   = useState(false);
 
-  // ── UI state ────────────────────────────
   const [activeTab,      setActiveTab]      = useState("all");
   const [searchQuery,    setSearchQuery]    = useState("");
   const [sortKey,        setSortKey]        = useState("newest");
   const [showSortMenu,   setShowSortMenu]   = useState(false);
-  const [viewMode,       setViewMode]       = useState("grid"); // grid | list
+  const [viewMode,       setViewMode]       = useState("grid");
   const [showChart,      setShowChart]      = useState(true);
 
-  // ── Detail modal state ───────────────────
   const [selectedReport, setSelectedReport] = useState(null);
   const [showDetail,     setShowDetail]     = useState(false);
 
-  // ═══════════════════════════════════════
-  //  FETCH REPORTS
-  // ═══════════════════════════════════════
+  const dashboardStyle = {
+    "--c-offWhite": colors.offWhite,
+    "--c-olive": colors.olive,
+    "--c-oliveDark": colors.oliveDark,
+    "--c-sage": colors.sage,
+    "--c-accentGold": colors.accentGold,
+    "--c-charcoal": colors.charcoal,
+    "--c-textPrimary": colors.textPrimary,
+    "--c-textSecondary": colors.textSecondary,
+    "--c-borderLight": colors.borderLight,
+    fontFamily: fonts.body,
+  };
+
   const fetchReports = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     else           setLoading(true);
@@ -94,16 +81,13 @@ const AuthorityDashboard = () => {
     }
   }, [user?.pincode]);
 
-  // ═══════════════════════════════════════
-  //  FETCH MONTHLY STATS (for chart)
-  // ═══════════════════════════════════════
   const fetchStats = useCallback(async () => {
     setStatsLoading(true);
     try {
       const res = await getReportStats();
       setMonthlyStats(res.data.monthly || []);
     } catch {
-      // silently fail chart — not critical
+      // silently fail chart
     } finally {
       setStatsLoading(false);
     }
@@ -114,414 +98,271 @@ const AuthorityDashboard = () => {
     fetchStats();
   }, [fetchReports, fetchStats]);
 
-  // ═══════════════════════════════════════
-  //  COMPUTED STATS
-  // ═══════════════════════════════════════
   const stats = {
     total:    reports.length,
     pending:  reports.filter((r) => r.status === "pending").length,
     resolved: reports.filter((r) => r.status === "resolved").length,
     rate:     reports.length > 0
-      ? Math.round(
-          (reports.filter((r) => r.status === "resolved").length /
-            reports.length) *
-            100
-        )
+      ? Math.round((reports.filter((r) => r.status === "resolved").length / reports.length) * 100)
       : 0,
   };
 
-  // ═══════════════════════════════════════
-  //  FILTER + SORT REPORTS
-  // ═══════════════════════════════════════
   const filteredReports = reports
-    // tab filter
     .filter((r) => activeTab === "all" || r.status === activeTab)
-    // search filter
     .filter((r) => {
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
       return (
-        r.description?.toLowerCase().includes(q)      ||
-        r.pincode?.toString().includes(q)              ||
+        r.description?.toLowerCase().includes(q) ||
+        r.pincode?.toString().includes(q) ||
         r.reporter_name?.toLowerCase().includes(q)
       );
     })
-    // sort
     .sort((a, b) => {
-      if (sortKey === "newest")
-        return new Date(b.created_at) - new Date(a.created_at);
-      if (sortKey === "oldest")
-        return new Date(a.created_at) - new Date(b.created_at);
-      if (sortKey === "status")
-        return a.status.localeCompare(b.status);
+      if (sortKey === "newest") return new Date(b.created_at) - new Date(a.created_at);
+      if (sortKey === "oldest") return new Date(a.created_at) - new Date(b.created_at);
+      if (sortKey === "status") return a.status.localeCompare(b.status);
       return 0;
     });
 
-  // ═══════════════════════════════════════
-  //  STATUS UPDATE HANDLER
-  //  Called from ReportCard + ReportDetailCard
-  // ═══════════════════════════════════════
   const handleStatusUpdate = (reportId, newStatus) => {
-    // Optimistically update local state
-    setReports((prev) =>
-      prev.map((r) =>
-        r.id === reportId ? { ...r, status: newStatus } : r
-      )
-    );
-
-    // Also update selected report if open in detail
+    setReports((prev) => prev.map((r) => r.id === reportId ? { ...r, status: newStatus } : r));
     if (selectedReport?.id === reportId) {
       setSelectedReport((prev) => ({ ...prev, status: newStatus }));
     }
+    fetchStats(); 
   };
 
-  // ── Open detail modal ────────────────────
   const handleReportClick = (report) => {
     setSelectedReport(report);
     setShowDetail(true);
   };
 
-  // ── Stat card config ─────────────────────
   const statCards = [
     {
-      label:  "Total Reports",
-      value:  stats.total,
-      icon:   <FileText   className="w-5 h-5" />,
-      color:  "text-blue-400",
-      bg:     "bg-blue-500/10 border-blue-500/20",
-      iconBg: "bg-blue-500/20",
+      label: "Total Reports",
+      value: stats.total,
+      icon: <FileText className="w-5 h-5 text-blue-600" />,
+      bg: "bg-blue-50 border-blue-100",
+      iconBg: "bg-blue-100",
     },
     {
-      label:  "Pending",
-      value:  stats.pending,
-      icon:   <Clock      className="w-5 h-5" />,
-      color:  "text-yellow-400",
-      bg:     "bg-yellow-500/10 border-yellow-500/20",
-      iconBg: "bg-yellow-500/20",
+      label: "Pending",
+      value: stats.pending,
+      icon: <Clock className="w-5 h-5 text-[var(--c-accentGold)]" />,
+      bg: "bg-[#FFF8E6] border-[#F2DCA2]",
+      iconBg: "bg-amber-100",
     },
     {
-      label:  "Resolved",
-      value:  stats.resolved,
-      icon:   <CheckCircle className="w-5 h-5" />,
-      color:  "text-green-400",
-      bg:     "bg-green-500/10 border-green-500/20",
-      iconBg: "bg-green-500/20",
+      label: "Resolved",
+      value: stats.resolved,
+      icon: <CheckCircle className="w-5 h-5 text-[var(--c-oliveDark)]" />,
+      bg: "bg-[var(--c-sage)]/30 border-[var(--c-olive)]/20",
+      iconBg: "bg-[var(--c-sage)]",
     },
     {
-      label:  "Resolution Rate",
-      value:  `${stats.rate}%`,
-      icon:   <BarChart2  className="w-5 h-5" />,
-      color:  "text-purple-400",
-      bg:     "bg-purple-500/10 border-purple-500/20",
-      iconBg: "bg-purple-500/20",
+      label: "Resolution Rate",
+      value: `${stats.rate}%`,
+      icon: <BarChart2 className="w-5 h-5 text-[var(--c-charcoal)]" />,
+      bg: "bg-gray-50 border-gray-200",
+      iconBg: "bg-gray-200",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-950 w-full">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+    <div style={dashboardStyle} className="min-h-[calc(100vh-80px)] bg-[var(--c-offWhite)] pb-16 relative">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10">
 
-        {/* ════════════════════════════════
-             PAGE HEADER
-            ════════════════════════════════ */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-
-          {/* Left: greeting */}
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-3">
-              {/* Authority badge */}
-              <div className="w-10 h-10 bg-green-600/20 border border-green-500/30 rounded-xl flex items-center justify-center shrink-0">
-                <ShieldCheck className="w-5 h-5 text-green-400" />
+        {/* ── PAGE HEADER ── */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white border border-[var(--c-borderLight)] rounded-2xl flex items-center justify-center shadow-sm shrink-0">
+                <Building2 className="w-7 h-7 text-[var(--c-accentGold)]" />
               </div>
               <div>
-                <h1 className="text-white text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
+                <h1 className="text-3xl md:text-4xl font-black text-[var(--c-charcoal)] tracking-tight mb-1" style={{ fontFamily: fonts.heading }}>
                   Authority Dashboard
                 </h1>
-                <p className="text-gray-400 text-sm mt-0.5">
-                  Welcome back,{" "}
-                  <span className="text-green-400 font-medium">
-                    {user?.name || "Authority"}
-                  </span>
+                <p className="text-[var(--c-textSecondary)] text-sm font-medium">
+                  Welcome back, <span className="text-[var(--c-olive)] font-bold">{user?.name || "Official"}</span>
                 </p>
               </div>
             </div>
 
-            {/* Meta pills */}
-            <div className="flex flex-wrap items-center gap-2 mt-1">
-              <div className="flex items-center gap-1.5 bg-gray-900 border border-gray-800 rounded-full px-3 py-1">
-                <MapPin className="w-3 h-3 text-green-400" />
-                <span className="text-gray-400 text-xs">
-                  Zone:{" "}
-                  <span className="text-green-400 font-mono font-semibold">
-                    {user?.pincode || "—"}
-                  </span>
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <div className="flex items-center gap-1.5 bg-white border border-[var(--c-borderLight)] rounded-full px-3 py-1.5 shadow-sm">
+                <MapPin className="w-3.5 h-3.5 text-[var(--c-olive)]" />
+                <span className="text-[var(--c-textSecondary)] text-xs font-bold uppercase tracking-wider">
+                  Zone: <span className="text-[var(--c-charcoal)]">{user?.pincode || "—"}</span>
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 bg-gray-900 border border-gray-800 rounded-full px-3 py-1">
-                <ShieldCheck className="w-3 h-3 text-green-400" />
-                <span className="text-gray-400 text-xs">
+              <div className="flex items-center gap-1.5 bg-white border border-[var(--c-borderLight)] rounded-full px-3 py-1.5 shadow-sm">
+                <ShieldCheck className="w-3.5 h-3.5 text-[var(--c-accentGold)]" />
+                <span className="text-[var(--c-charcoal)] text-xs font-bold uppercase tracking-wider">
                   {user?.department || "Department"}
                 </span>
               </div>
-              {/* Live indicator */}
-              <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 rounded-full px-3 py-1">
+              <div className="flex items-center gap-1.5 bg-[var(--c-sage)]/50 border border-[var(--c-olive)]/20 rounded-full px-3 py-1.5 shadow-sm">
                 <span className="relative flex w-2 h-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--c-olive)] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--c-oliveDark)]" />
                 </span>
-                <span className="text-green-400 text-xs font-medium">
-                  Live
-                </span>
+                <span className="text-[var(--c-oliveDark)] text-xs font-bold uppercase tracking-wider">Live</span>
               </div>
             </div>
           </div>
 
-          {/* Right: refresh + chart toggle */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => setShowChart((p) => !p)}
-              className={`
-                flex items-center gap-1.5 text-xs font-medium px-3 py-2
-                rounded-xl border transition-all duration-200
-                ${showChart
-                  ? "bg-indigo-500/20 border-indigo-500/30 text-indigo-400"
-                  : "bg-gray-900 border-gray-800 text-gray-400 hover:text-white"
-                }
-              `}
+              className={`flex items-center gap-2 text-xs font-bold px-4 py-2.5 rounded-full transition-all shadow-sm ${
+                showChart
+                  ? "bg-[var(--c-charcoal)] text-white"
+                  : "bg-white border border-[var(--c-borderLight)] text-[var(--c-textSecondary)] hover:text-[var(--c-charcoal)]"
+              }`}
             >
               <BarChart2 className="w-4 h-4" />
-              <span className="hidden sm:inline">
-                {showChart ? "Hide Chart" : "Show Chart"}
-              </span>
+              <span className="hidden sm:inline">{showChart ? "Hide Chart" : "Show Chart"}</span>
             </button>
 
             <button
               onClick={() => { fetchReports(true); fetchStats(); }}
               disabled={refreshing}
-              className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-xl bg-gray-900 border border-gray-800 text-gray-400 hover:text-white hover:border-gray-700 transition-all disabled:opacity-50"
+              className="flex items-center gap-2 bg-white border border-[var(--c-borderLight)] text-[var(--c-charcoal)] hover:bg-[var(--c-sage)]/30 px-4 py-2.5 rounded-full text-xs font-bold shadow-sm transition-all disabled:opacity-50"
             >
-              <RefreshCw
-                className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
-              />
-              <span className="hidden sm:inline">
-                {refreshing ? "Refreshing..." : "Refresh"}
-              </span>
+              <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin text-[var(--c-olive)]" : ""}`} />
+              <span className="hidden sm:inline">{refreshing ? "Syncing..." : "Refresh"}</span>
             </button>
           </div>
         </div>
 
-        {/* ════════════════════════════════
-             STAT CARDS
-            ════════════════════════════════ */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {statCards.map((card) => (
-            <div
-              key={card.label}
-              className={`
-                flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4
-                p-4 sm:p-5 bg-gray-900 border rounded-2xl
-                transition-all duration-200 hover:scale-[1.02]
-                ${card.bg}
-              `}
-            >
-              <div
-                className={`
-                  w-10 h-10 sm:w-11 sm:h-11 rounded-xl
-                  flex items-center justify-center shrink-0
-                  ${card.iconBg} ${card.color}
-                `}
-              >
-                {card.icon}
+        {/* ── STAT CARDS ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {statCards.map((card, idx) => (
+            <div key={idx} className={`p-5 rounded-3xl border flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow ${card.bg}`}>
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${card.iconBg}`}>
+                  {card.icon}
+                </div>
+                <span className="text-xs font-bold text-[var(--c-textSecondary)] uppercase tracking-wider hidden sm:block">
+                  {card.label}
+                </span>
               </div>
               <div>
-                <p className="text-gray-400 text-xs font-medium leading-tight">
-                  {card.label}
-                </p>
-                <p className={`text-2xl sm:text-3xl font-bold mt-0.5 ${card.color}`}>
-                  {card.value}
-                </p>
+                <p className="text-[var(--c-textSecondary)] text-xs sm:hidden mb-1 font-bold uppercase">{card.label}</p>
+                <p className="text-3xl md:text-4xl font-black text-[var(--c-charcoal)]">{card.value}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* ════════════════════════════════
-             RESOLUTION PROGRESS BAR
-            ════════════════════════════════ */}
+        {/* ── RESOLUTION PROGRESS ── */}
         {stats.total > 0 && (
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl px-5 sm:px-6 py-4 flex flex-col gap-3">
+          <div className="bg-white border border-[var(--c-borderLight)] rounded-3xl px-6 py-5 flex flex-col gap-4 shadow-sm mb-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-green-400" />
-                <span className="text-white text-sm font-semibold">
-                  Overall Resolution Progress
-                </span>
+                <CheckCircle className="w-5 h-5 text-[var(--c-olive)]" />
+                <span className="text-[var(--c-charcoal)] text-sm font-black uppercase tracking-wider">Overall Resolution Progress</span>
               </div>
-              <span className="text-green-400 text-sm font-bold">
-                {stats.rate}%
-              </span>
+              <span className="text-[var(--c-olive)] text-lg font-black">{stats.rate}%</span>
             </div>
-
-            {/* Progress bar track */}
-            <div className="w-full h-2.5 bg-gray-800 rounded-full overflow-hidden">
+            <div className="w-full h-3 bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] rounded-full overflow-hidden">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-green-600 to-green-400 transition-all duration-700"
+                className="h-full rounded-full bg-gradient-to-r from-[var(--c-olive)] to-[var(--c-oliveDark)] transition-all duration-1000 ease-out"
                 style={{ width: `${stats.rate}%` }}
               />
             </div>
-
-            {/* Labels */}
-            <div className="flex items-center justify-between text-xs text-gray-500">
-              <span>
-                <span className="text-yellow-400 font-semibold">
-                  {stats.pending}
-                </span>{" "}
-                pending
-              </span>
-              <span>
-                <span className="text-green-400 font-semibold">
-                  {stats.resolved}
-                </span>{" "}
-                of{" "}
-                <span className="text-white font-semibold">
-                  {stats.total}
-                </span>{" "}
-                resolved
-              </span>
+            <div className="flex items-center justify-between text-xs font-bold text-[var(--c-textSecondary)]">
+              <span><span className="text-[var(--c-accentGold)]">{stats.pending}</span> pending</span>
+              <span><span className="text-[var(--c-olive)]">{stats.resolved}</span> of <span className="text-[var(--c-charcoal)]">{stats.total}</span> resolved</span>
             </div>
           </div>
         )}
 
-        {/* ════════════════════════════════
-             MONTHLY STATS CHART
-            ════════════════════════════════ */}
+        {/* ── CHART SECTION ── */}
         {showChart && (
-          <div className="transition-all duration-300">
+          <div className="mb-8 transition-all duration-300">
             {statsLoading ? (
-              <div className="bg-gray-900 border border-gray-800 rounded-2xl p-8">
-                <Loader variant="section" text="Loading chart data..." />
+              <div className="bg-white border border-[var(--c-borderLight)] rounded-3xl p-8 flex items-center justify-center shadow-sm">
+                <Loader variant="section" text="Loading analytics..." />
               </div>
             ) : (
-              <StatsChart
-                monthlyData={monthlyStats}
-                title="Monthly Incident Overview"
-              />
+              <div className="bg-white border border-[var(--c-borderLight)] rounded-3xl p-6 shadow-sm">
+                 <StatsChart monthlyData={monthlyStats} title="Monthly Incident Overview" />
+              </div>
             )}
           </div>
         )}
 
-        {/* ════════════════════════════════
-             REPORTS SECTION
-            ════════════════════════════════ */}
+        {/* ── REPORTS SECTION ── */}
         <div className="flex flex-col gap-5">
-
-          {/* Section header */}
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-white font-semibold text-lg flex items-center gap-2">
-                <FileText className="w-5 h-5 text-green-400" />
-                Pincode Reports
-                <span className="text-xs font-normal text-gray-500 ml-1">
-                  ({filteredReports.length} shown)
+              <h2 className="text-[var(--c-charcoal)] font-black text-xl flex items-center gap-2" style={{ fontFamily: fonts.heading }}>
+                <FileText className="w-6 h-6 text-[var(--c-olive)]" />
+                Zone Incidents
+                <span className="text-sm font-bold text-[var(--c-textSecondary)] bg-white border border-[var(--c-borderLight)] px-2 py-0.5 rounded-full ml-2">
+                  {filteredReports.length}
                 </span>
               </h2>
 
-              {/* View mode toggle */}
-              <div className="flex items-center gap-1 bg-gray-900 border border-gray-800 rounded-xl p-1">
+              <div className="flex items-center gap-1 bg-white border border-[var(--c-borderLight)] rounded-xl p-1 shadow-sm">
                 <button
                   onClick={() => setViewMode("grid")}
-                  className={`
-                    p-2 rounded-lg transition-all
-                    ${viewMode === "grid"
-                      ? "bg-green-600 text-white"
-                      : "text-gray-500 hover:text-white"
-                    }
-                  `}
+                  className={`p-2 rounded-lg transition-all ${viewMode === "grid" ? "bg-[var(--c-sage)] text-[var(--c-oliveDark)] shadow-sm" : "text-gray-400 hover:text-[var(--c-charcoal)]"}`}
                 >
-                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <LayoutGrid className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode("list")}
-                  className={`
-                    p-2 rounded-lg transition-all
-                    ${viewMode === "list"
-                      ? "bg-green-600 text-white"
-                      : "text-gray-500 hover:text-white"
-                    }
-                  `}
+                  className={`p-2 rounded-lg transition-all ${viewMode === "list" ? "bg-[var(--c-sage)] text-[var(--c-oliveDark)] shadow-sm" : "text-gray-400 hover:text-[var(--c-charcoal)]"}`}
                 >
-                  <List className="w-3.5 h-3.5" />
+                  <List className="w-4 h-4" />
                 </button>
               </div>
             </div>
 
-            {/* Search + Sort + Tabs */}
-            <div className="flex flex-col sm:flex-row gap-3">
-
-              {/* Search */}
+            {/* Filters */}
+            <div className="flex flex-col md:flex-row gap-3">
               <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by description, reporter or pincode..."
-                  className="
-                    w-full bg-gray-900 border border-gray-800
-                    hover:border-gray-700 focus:border-green-500/50
-                    focus:ring-2 focus:ring-green-500/20
-                    rounded-xl pl-10 pr-10 py-2.5
-                    text-white text-sm placeholder-gray-600
-                    focus:outline-none transition-all duration-200
-                  "
+                  placeholder="Search by issue, reporter name, or pincode..."
+                  className="w-full bg-white border border-[var(--c-borderLight)] rounded-full pl-11 pr-10 py-3 text-sm focus:outline-none focus:border-[var(--c-charcoal)] focus:ring-1 focus:ring-[var(--c-charcoal)] shadow-sm transition-all"
                 />
                 {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
-                  >
+                  <button onClick={() => setSearchQuery("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[var(--c-charcoal)]">
                     <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
 
-              <div className="flex gap-2">
-
-                {/* Sort dropdown */}
-                <div className="relative">
+              {/* FIXED CONTAINER: No more overflow-x-hidden on the dropdown! */}
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                
+                {/* Sort Dropdown */}
+                <div className="relative shrink-0 z-20">
                   <button
                     onClick={() => setShowSortMenu((p) => !p)}
-                    className="flex items-center gap-1.5 h-full bg-gray-900 border border-gray-800 hover:border-gray-700 text-gray-400 hover:text-white text-xs font-medium px-3 py-2.5 rounded-xl transition-all"
+                    className="flex items-center gap-2 h-full bg-white border border-[var(--c-borderLight)] hover:bg-[var(--c-offWhite)] text-[var(--c-charcoal)] text-sm font-bold px-4 py-2.5 rounded-full transition-all shadow-sm"
                   >
-                    <SlidersHorizontal className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">
-                      {SORT_OPTIONS.find((s) => s.key === sortKey)?.label}
-                    </span>
-                    <ChevronDown className="w-3.5 h-3.5" />
+                    <SlidersHorizontal className="w-4 h-4" />
+                    <span className="hidden sm:inline">{SORT_OPTIONS.find((s) => s.key === sortKey)?.label}</span>
+                    <ChevronDown className="w-4 h-4 text-gray-400" />
                   </button>
                   {showSortMenu && (
                     <>
-                      {/* Backdrop */}
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={() => setShowSortMenu(false)}
-                      />
-                      {/* Dropdown */}
-                      <div className="absolute right-0 top-full mt-2 z-20 bg-gray-900 border border-gray-800 rounded-xl shadow-xl overflow-hidden min-w-[150px]">
+                      <div className="fixed inset-0" onClick={() => setShowSortMenu(false)} />
+                      <div className="absolute right-0 top-full mt-2 bg-white border border-[var(--c-borderLight)] rounded-2xl shadow-xl overflow-hidden w-48 py-2">
                         {SORT_OPTIONS.map((opt) => (
                           <button
                             key={opt.key}
-                            onClick={() => {
-                              setSortKey(opt.key);
-                              setShowSortMenu(false);
-                            }}
-                            className={`
-                              w-full text-left px-4 py-2.5 text-sm transition-colors
-                              ${sortKey === opt.key
-                                ? "bg-green-600/20 text-green-400 font-medium"
-                                : "text-gray-400 hover:bg-gray-800 hover:text-white"
-                              }
-                            `}
+                            onClick={() => { setSortKey(opt.key); setShowSortMenu(false); }}
+                            className={`w-full text-left px-5 py-3 text-sm transition-colors ${sortKey === opt.key ? "bg-[var(--c-sage)]/50 text-[var(--c-oliveDark)] font-bold" : "text-[var(--c-charcoal)] hover:bg-[var(--c-offWhite)] font-medium"}`}
                           >
                             {opt.label}
                           </button>
@@ -531,39 +372,22 @@ const AuthorityDashboard = () => {
                   )}
                 </div>
 
-                {/* Filter tabs */}
-                <div className="flex bg-gray-900 border border-gray-800 rounded-xl p-1 gap-1">
+                {/* Tabs */}
+                <div className="flex bg-white border border-[var(--c-borderLight)] rounded-full p-1 gap-1 shadow-sm overflow-x-auto hide-scrollbar">
                   {TABS.map((tab) => {
-                    const count =
-                      tab.key === "all"
-                        ? stats.total
-                        : tab.key === "pending"
-                        ? stats.pending
-                        : stats.resolved;
+                    const count = tab.key === "all" ? stats.total : tab.key === "pending" ? stats.pending : stats.resolved;
                     return (
                       <button
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
-                        className={`
-                          text-xs font-medium px-3 py-2 rounded-lg
-                          transition-all duration-200 whitespace-nowrap
-                          ${activeTab === tab.key
-                            ? "bg-green-600 text-white shadow-sm"
-                            : "text-gray-400 hover:text-white hover:bg-gray-800"
-                          }
-                        `}
+                        className={`text-sm font-bold px-4 py-2 rounded-full transition-all flex items-center whitespace-nowrap gap-2 ${
+                          activeTab === tab.key
+                            ? "bg-[var(--c-charcoal)] text-white shadow-md"
+                            : "text-[var(--c-textSecondary)] hover:text-[var(--c-charcoal)] hover:bg-[var(--c-offWhite)]"
+                        }`}
                       >
                         {tab.label}
-                        <span
-                          className={`
-                            ml-1.5 text-[10px] font-semibold
-                            px-1.5 py-0.5 rounded-full
-                            ${activeTab === tab.key
-                              ? "bg-white/20 text-white"
-                              : "bg-gray-800 text-gray-500"
-                            }
-                          `}
-                        >
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${activeTab === tab.key ? "bg-white/20" : "bg-[var(--c-offWhite)] border border-[var(--c-borderLight)]"}`}>
                           {count}
                         </span>
                       </button>
@@ -571,109 +395,77 @@ const AuthorityDashboard = () => {
                   })}
                 </div>
               </div>
+
             </div>
           </div>
 
-          {/* ── Reports content ──────────── */}
+          {/* ── DATA RENDER ── */}
           {loading ? (
-            <Loader variant="section" text="Loading reports..." />
+            <div className="py-12"><Loader variant="section" text="Syncing zone reports..." /></div>
           ) : filteredReports.length === 0 ? (
-            /* Empty state */
-            <div className="flex flex-col items-center justify-center py-24 gap-4 text-center bg-gray-900/40 border border-gray-800 border-dashed rounded-2xl">
-              <div className="w-16 h-16 rounded-2xl bg-gray-900 border border-gray-800 flex items-center justify-center">
-                <Inbox className="w-8 h-8 text-gray-600" />
+            <div className="flex flex-col items-center justify-center py-24 gap-4 text-center bg-white border border-[var(--c-borderLight)] rounded-3xl shadow-sm">
+              <div className="w-16 h-16 rounded-full bg-[var(--c-sage)] flex items-center justify-center mb-2">
+                <Inbox className="w-8 h-8 text-[var(--c-olive)]" />
               </div>
               <div>
-                <p className="text-gray-400 font-medium text-base">
-                  {searchQuery
-                    ? "No reports match your search"
-                    : activeTab !== "all"
-                    ? `No ${activeTab} reports in your zone`
-                    : "No reports in your pincode zone yet"}
-                </p>
-                <p className="text-gray-600 text-sm mt-1">
-                  {searchQuery
-                    ? "Try a different keyword"
-                    : "Reports submitted by citizens will appear here"}
+                <h3 className="text-xl font-black text-[var(--c-charcoal)]" style={{ fontFamily: fonts.heading }}>
+                  {searchQuery ? "No matches found" : activeTab !== "all" ? `No ${activeTab} reports` : "Zone is clear"}
+                </h3>
+                <p className="text-[var(--c-textSecondary)] text-sm font-medium mt-1">
+                  {searchQuery ? "Try adjusting your search terms" : "New incidents submitted by citizens will appear here."}
                 </p>
               </div>
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="flex items-center gap-1.5 text-green-400 hover:text-green-300 text-sm transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                  Clear search
-                </button>
-              )}
             </div>
           ) : viewMode === "grid" ? (
-            /* ── Grid view ─────────────── */
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredReports.map((report) => (
-                <div
-                  key={report.id}
-                  onClick={() => handleReportClick(report)}
-                  className="cursor-pointer"
-                >
-                  <ReportCard
-                    report={report}
-                    mode="authority"
-                    onStatusUpdate={handleStatusUpdate}
-                  />
+                <div key={report.id} onClick={() => handleReportClick(report)} className="cursor-pointer transform hover:-translate-y-1 transition-transform">
+                  <ReportCard report={report} mode="authority" onStatusUpdate={handleStatusUpdate} />
                 </div>
               ))}
             </div>
           ) : (
-            /* ── List view ─────────────── */
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-3">
               {filteredReports.map((report) => (
-                <ListReportRow
-                  key={report.id}
-                  report={report}
-                  onStatusUpdate={handleStatusUpdate}
-                  onClick={() => handleReportClick(report)}
-                />
+                <ListReportRow key={report.id} report={report} onStatusUpdate={handleStatusUpdate} onClick={() => handleReportClick(report)} />
               ))}
             </div>
           )}
         </div>
       </div>
 
-      {/* ════════════════════════════════════
-           REPORT DETAIL MODAL
-          ════════════════════════════════════ */}
+      {/* ── DETAIL MODAL ── */}
       {showDetail && selectedReport && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-start justify-center p-4 sm:p-6 overflow-y-auto">
-          <div className="w-full max-w-3xl my-auto">
+        <div className="fixed inset-0 z-50 bg-[var(--c-charcoal)]/40 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <div className="w-full max-w-3xl my-auto animate-modal-card">
             <ReportDetailCard
               report={selectedReport}
               mode="authority"
               onStatusUpdate={handleStatusUpdate}
-              onBack={() => {
-                setShowDetail(false);
-                setSelectedReport(null);
-              }}
+              onBack={() => { setShowDetail(false); setSelectedReport(null); }}
             />
           </div>
         </div>
       )}
+
+      <style dangerouslySetInnerHTML={{__html: `
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes modalSlideUp { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .animate-modal-card { animation: modalSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+      `}} />
     </div>
   );
 };
 
 // ═════════════════════════════════════════
-//  LIST ROW COMPONENT (internal)
-//  Used when viewMode === "list"
-//  Compact single-line report row
+//  LIST ROW COMPONENT (Light Premium Theme)
 // ═════════════════════════════════════════
 const ListReportRow = ({ report, onStatusUpdate, onClick }) => {
   const [updating, setUpdating] = useState(false);
 
   const formatDate = (dateStr) =>
-    new Date(dateStr).toLocaleDateString("en-IN", {
-      day: "2-digit", month: "short", year: "numeric",
-    });
+    new Date(dateStr).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
   const handleToggle = async (e) => {
     e.stopPropagation();
@@ -693,75 +485,51 @@ const ListReportRow = ({ report, onStatusUpdate, onClick }) => {
   return (
     <div
       onClick={onClick}
-      className="
-        group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4
-        bg-gray-900 border border-gray-800 hover:border-gray-700
-        rounded-xl px-4 py-4 cursor-pointer
-        transition-all duration-200 hover:bg-gray-900/80
-      "
+      className="group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 bg-white border border-[var(--c-borderLight)] rounded-2xl px-5 py-4 cursor-pointer transition-all duration-300 hover:shadow-md hover:border-[var(--c-charcoal)]"
     >
-      {/* Status badge */}
       <div className="shrink-0">
         <StatusBadge status={report.status} size="small" />
       </div>
 
-      {/* Description */}
-      <p className="flex-1 text-gray-300 text-sm line-clamp-1 min-w-0">
+      <p className="flex-1 text-[var(--c-charcoal)] font-medium text-sm line-clamp-1 min-w-0">
         {report.description}
       </p>
 
-      {/* Meta info */}
-      <div className="flex items-center gap-3 sm:gap-4 shrink-0 flex-wrap">
-
-        {/* Reporter */}
+      <div className="flex items-center gap-4 shrink-0 flex-wrap">
         {report.reporter_name && (
-          <span className="text-gray-500 text-xs hidden md:block">
+          <span className="text-[var(--c-textSecondary)] text-xs font-bold uppercase tracking-wider hidden md:block">
             {report.reporter_name}
           </span>
         )}
-
-        {/* Date */}
-        <span className="text-gray-600 text-xs hidden sm:block">
+        <span className="text-[var(--c-textSecondary)] font-medium text-xs hidden sm:block">
           {formatDate(report.created_at)}
         </span>
-
-        {/* Pincode */}
-        <span className="text-blue-400 text-xs font-mono font-semibold hidden lg:block">
+        <span className="bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] px-2.5 py-1 rounded-md text-[var(--c-charcoal)] text-xs font-bold tracking-widest hidden lg:block">
           {report.pincode}
         </span>
 
-        {/* Toggle button */}
         <button
           onClick={handleToggle}
           disabled={updating}
-          className={`
-            flex items-center gap-1.5 text-xs font-medium
-            px-3 py-1.5 rounded-lg border transition-all
-            disabled:opacity-50 disabled:cursor-not-allowed
-            ${report.status === "pending"
-              ? "bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20"
-              : "bg-yellow-500/10 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/20"
-            }
-          `}
+          className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border transition-all disabled:opacity-50 shadow-sm transform hover:-translate-y-0.5 ${
+            report.status === "pending"
+              ? "bg-[var(--c-olive)] border-[var(--c-oliveDark)] text-white hover:bg-[var(--c-oliveDark)]"
+              : "bg-[#FFF8E6] border-[#F2DCA2] text-[var(--c-accentGold)] hover:bg-[#F2DCA2]/30"
+          }`}
         >
           {updating ? (
-            <span className="w-3 h-3 border border-current/30 border-t-current rounded-full animate-spin" />
+            <span className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
           ) : report.status === "pending" ? (
-            <CheckCircle className="w-3.5 h-3.5" />
+            <CheckCircle className="w-4 h-4" />
           ) : (
-            <Clock className="w-3.5 h-3.5" />
+            <Clock className="w-4 h-4" />
           )}
           <span className="hidden sm:inline">
-            {updating
-              ? "..."
-              : report.status === "pending"
-              ? "Resolve"
-              : "Reopen"}
+            {updating ? "Syncing..." : report.status === "pending" ? "Resolve" : "Reopen"}
           </span>
         </button>
 
-        {/* Chevron */}
-        <ChevronDown className="w-4 h-4 text-gray-600 -rotate-90 group-hover:text-gray-400 transition-colors hidden sm:block" />
+        <ChevronDown className="w-5 h-5 text-gray-400 -rotate-90 group-hover:text-[var(--c-charcoal)] transition-colors hidden sm:block" />
       </div>
     </div>
   );

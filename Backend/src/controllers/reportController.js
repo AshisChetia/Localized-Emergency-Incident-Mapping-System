@@ -86,11 +86,19 @@ const getMyReports = async (req, res) => {
 };
 
 const getReportsByPincode = async (req, res) => {
-  const authorityPincode = req.user.pincode;
+  // Grab the pincode from the URL parameter (:pincode) 
+  // falling back to the authority's own pincode if needed
+  const targetPincode = req.params.pincode || req.user.pincode;
+
   try {
-    const reports = await Report.findByPincode(authorityPincode);
-    return res.status(200).json({ pincode: authorityPincode, total: reports.length, reports });
+    const reports = await Report.findByPincode(targetPincode);
+    return res.status(200).json({ 
+      pincode: targetPincode, 
+      total: reports.length, 
+      reports 
+    });
   } catch (error) {
+    console.error("Fetch Pincode Reports Error:", error);
     return res.status(500).json({ message: "Server error while fetching reports" });
   }
 };

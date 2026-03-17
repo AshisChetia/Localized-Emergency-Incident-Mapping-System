@@ -18,6 +18,7 @@ import Landing from "./pages/Landing";
 import UserDashboard from "./pages/user/UserDashboard";
 import UserProfile from "./pages/user/UserProfile";
 import AuthorityDashboard from "./pages/authority/AuthorityDashboard";
+import AuthorityProfile from "./pages/authority/authorityProfile";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
 const App = () => {
@@ -53,6 +54,10 @@ const App = () => {
           <Route
             path="/authority/dashboard"
             element={ <ProtectedRoute allowedRole="authority"><AuthorityDashboard /></ProtectedRoute> }
+          />
+          <Route
+            path="/authority/profile"
+            element={ <ProtectedRoute allowedRole="authority"><AuthorityProfile /></ProtectedRoute> }
           />
 
           <Route

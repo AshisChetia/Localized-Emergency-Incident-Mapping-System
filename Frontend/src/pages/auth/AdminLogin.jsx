@@ -13,7 +13,6 @@ import { colors, fonts } from "../../styles/designTokens";
 
 const AdminLogin = () => {
   const { login } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/admin/dashboard";
 
@@ -40,7 +39,7 @@ const AdminLogin = () => {
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.email.trim()) newErrors.email = "Email is required";
+    if (!formData.email.trim()) newErrors.email = "Admin email is required";
     if (!formData.password) newErrors.password = "Password is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -49,18 +48,40 @@ const AdminLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
+    
     setSubmitting(true);
+    toast.dismiss(); // Clear any old error popups
+
     try {
       const response = await loginAdmin({
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
       });
-      const { token, user } = response.data;
-      login(token, user);
-      toast.success("Super Admin access granted.");
-      navigate(from, { replace: true });
+
+      const { token, admin } = response.data;
+
+      // Save to context
+      login(token, { ...admin, role: "admin" });
+      
+      // FIXED: Safely use email instead of name to prevent React from crashing!
+      toast.success(`Admin access granted for ${admin.email}`);
+      
+      // Force a hard redirect to the dashboard to bypass any React state race conditions
+      window.location.href = from;
+
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Invalid admin credentials.");
+      const msg = error?.response?.data?.message || "";
+      const status = error?.response?.status;
+
+      if (status === 401 || status === 403) {
+        toast.error("Invalid admin credentials");
+        setErrors({
+          email: "Check your email",
+          password: "Check your password",
+        });
+      } else {
+        toast.error(msg || "Login failed. Please check browser console.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -68,7 +89,7 @@ const AdminLogin = () => {
 
   return (
     <div style={authStyle} className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4 relative overflow-hidden bg-[var(--c-offWhite)]">
-      {/* Animated Blobs - Darker/Subtler for Admin */}
+      {/* Premium Animated Blobs - Darker/Subtler for Admin */}
       <div className="absolute top-10 right-10 w-72 h-72 bg-[var(--c-charcoal)] rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
       <div className="absolute bottom-10 left-10 w-72 h-72 bg-[var(--c-accentGold)] rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
 
@@ -77,7 +98,7 @@ const AdminLogin = () => {
         
         {/* Header */}
         <div className="flex flex-col items-center text-center gap-2">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[var(--c-accentGold)] bg-[var(--c-accentGold)]/10 px-3 py-1 rounded-full mb-1">
+          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[var(--c-accentGold)] bg-[#FFF8E6] border border-[#F2DCA2] px-3 py-1 rounded-full mb-1">
             <AlertTriangle className="w-3.5 h-3.5" />
             Restricted Access
           </div>
@@ -102,11 +123,11 @@ const AdminLogin = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="admin@system.local"
-                className="w-full bg-white border border-[var(--c-borderLight)] rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[var(--c-charcoal)] focus:ring-1 focus:ring-[var(--c-charcoal)] transition-all"
+                placeholder="admin@local.com"
+                className={`w-full bg-white border rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-1 transition-all ${errors.email ? "border-red-400 focus:ring-red-400" : "border-[var(--c-borderLight)] focus:border-[var(--c-charcoal)] focus:ring-[var(--c-charcoal)]"}`}
               />
             </div>
-            {errors.email && <p className="text-red-500 text-xs">{errors.email}</p>}
+            {errors.email && <p className="text-red-500 text-xs font-medium">{errors.email}</p>}
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -119,13 +140,13 @@ const AdminLogin = () => {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Enter admin password"
-                className="w-full bg-white border border-[var(--c-borderLight)] rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:border-[var(--c-charcoal)] focus:ring-1 focus:ring-[var(--c-charcoal)] transition-all"
+                className={`w-full bg-white border rounded-xl pl-10 pr-10 py-2.5 text-sm focus:outline-none focus:ring-1 transition-all ${errors.password ? "border-red-400 focus:ring-red-400" : "border-[var(--c-borderLight)] focus:border-[var(--c-charcoal)] focus:ring-[var(--c-charcoal)]"}`}
               />
               <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                 {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            {errors.password && <p className="text-red-500 text-xs">{errors.password}</p>}
+            {errors.password && <p className="text-red-500 text-xs font-medium">{errors.password}</p>}
           </div>
 
           <button type="submit" disabled={submitting} className="w-full mt-2 flex items-center justify-center gap-2 bg-[var(--c-charcoal)] hover:bg-black text-[var(--c-offWhite)] font-bold text-sm py-3 rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">

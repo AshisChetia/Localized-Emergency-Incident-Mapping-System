@@ -195,38 +195,51 @@ export const loginAuthority = async (req, res) => {
 // ═════════════════════════════════════════
 
 // ── Login Admin ─────────────────────────────
+// ── Login Admin ─────────────────────────────
 export const loginAdmin = async (req, res) => {
   const { email, password } = req.body;
 
+  console.log("\n=== 🕵️ ADMIN LOGIN ATTEMPT ===");
+  console.log("1. Email received from browser:", email);
+  console.log("2. Password received from browser:", password);
+
   try {
     if (!email || !password) {
+      console.log("❌ FAIL: Missing email or password");
       return res.status(400).json({ message: "Email and password are required" });
     }
 
     const admin = await Admin.findByEmail(email);
+    console.log("3. Database Search Result:", admin ? `Found Admin (ID: ${admin.id})` : "NULL (No user found with this email!)");
 
     if (!admin) {
+      console.log("❌ FAIL: Rejected at Email check");
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    console.log("4. Hash in Database:", admin.password);
     const isMatch = await bcrypt.compare(password, admin.password);
+    console.log("5. Password Match Result:", isMatch);
+
     if (!isMatch) {
+      console.log("❌ FAIL: Rejected at Password check");
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
+    console.log("✅ SUCCESS: Passwords match! Generating token...");
     const token = generateToken(admin.id, "admin");
 
     return res.status(200).json({
       message: "Admin login successful",
       token,
-      admin: { // FIXED: Sent as 'admin'
+      admin: { 
         id: admin.id,
         email: admin.email,
         role: "admin",
       },
     });
   } catch (error) {
-    console.error("Login Admin Error:", error);
+    console.error("❌ CRITICAL ERROR:", error);
     return res.status(500).json({ message: "Server error during login" });
   }
 };

@@ -50,7 +50,7 @@ router.delete(
 
 // ── Authority Routes ────────────────────────────────
 router.get(
-  "/pincode",
+  "/pincode/:pincode", 
   authMiddleware,
   roleMiddleware("authority"),
   getReportsByPincode

@@ -62,12 +62,18 @@ const Navbar = () => {
     closeMenu();
   };
 
-  // ── Smart Profile Link Wrapper ──
+  // ── FIXED: Smart Profile Link Wrapper ──
   const ProfileWrapper = ({ children, className, onClick }) => {
-    if (user?.role === "user") {
+    // Determine path based on role
+    let profilePath = null;
+    if (user?.role === "user") profilePath = "/user/profile";
+    if (user?.role === "authority") profilePath = "/authority/profile";
+
+    // If it's a user or authority, make it a clickable Link
+    if (profilePath) {
       return (
         <Link 
-          to="/user/profile" 
+          to={profilePath} 
           onClick={onClick} 
           className={`${className} hover:opacity-80 transition-opacity cursor-pointer group`}
         >
@@ -75,6 +81,7 @@ const Navbar = () => {
         </Link>
       );
     }
+    // Otherwise (like for admins without profiles yet), just render it as a div
     return <div className={className}>{children}</div>;
   };
 
@@ -132,7 +139,7 @@ const Navbar = () => {
               {/* Minimalist Profile Avatar */}
               <ProfileWrapper className="flex items-center">
                 <div 
-                  className="w-10 h-10 rounded-full bg-[var(--c-olive)] border-2 border-transparent group-hover:border-[var(--c-sage)] shadow-md flex items-center justify-center text-[var(--c-offWhite)] text-lg font-black transition-all"
+                  className="w-10 h-10 rounded-full bg-[var(--c-olive)] border-2 border-transparent group-hover:border-[var(--c-sage)] shadow-md flex items-center justify-center text-[var(--c-offWhite)] text-lg font-black transition-all cursor-pointer"
                   title={`${user.name || user.email} (${user.role})`}
                 >
                   {(user.name || user.email || "U")[0].toUpperCase()}
@@ -175,7 +182,7 @@ const Navbar = () => {
             </>
           ) : (
              <>
-               {/* Mobile Menu keeps the name since there is plenty of space */}
+               {/* Mobile Menu User Profile Link */}
                <ProfileWrapper onClick={closeMenu} className="flex items-center gap-3 mb-2 p-2 rounded-xl hover:bg-white transition-colors">
                  <div className="w-12 h-12 rounded-full bg-[var(--c-olive)] shadow-md flex items-center justify-center text-[var(--c-offWhite)] text-xl font-black">
                     {(user.name || user.email || "U")[0].toUpperCase()}
