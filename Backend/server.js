@@ -8,10 +8,15 @@ import authRoutes from "./src/routes/authRoutes.js";
 import reportRoutes from "./src/routes/reportRoutes.js";
 import authorityRoutes from "./src/routes/authorityRoutes.js";
 import adminRoutes from "./src/routes/adminRoutes.js";
+import cors from "cors";
 
 connectDB();
 
 const app = express();
+app.use(cors({
+    origin: true,
+    credentials: true,
+}));
 
 app.use(express.json())
 

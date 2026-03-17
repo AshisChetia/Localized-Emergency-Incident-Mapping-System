@@ -15,7 +15,7 @@ const Admin = {
   //  Used during Super Admin login
   // ═══════════════════════════════════════
   findByEmail: async (email) => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT * FROM admins WHERE email = ?`,
       [email]
     );
@@ -27,7 +27,7 @@ const Admin = {
   //  Used in authMiddleware token verify
   // ═══════════════════════════════════════
   findById: async (id) => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT
           id,
           email,
@@ -48,11 +48,11 @@ const Admin = {
   getPlatformStats: async () => {
     const [[userStats], [authorityStats], [reportStats]] = await Promise.all([
       // Total registered users
-      db.promise().query(
+      db.query(
         `SELECT COUNT(*) AS total_users FROM users`
       ),
       // Approved and pending authority counts
-      db.promise().query(
+      db.query(
         `SELECT
             SUM(CASE WHEN is_approved = true  THEN 1 ELSE 0 END) AS approved_authorities,
             SUM(CASE WHEN is_approved = false THEN 1 ELSE 0 END) AS pending_authorities,
@@ -60,7 +60,7 @@ const Admin = {
          FROM authorities`
       ),
       // Platform-wide report breakdown
-      db.promise().query(
+      db.query(
         `SELECT
             COUNT(*) AS total_reports,
             SUM(CASE WHEN status = 'pending'  THEN 1 ELSE 0 END) AS pending_reports,
@@ -81,7 +81,7 @@ const Admin = {
   //  For admin password change if needed
   // ═══════════════════════════════════════
   updatePassword: async (id, hashedPassword) => {
-    const [result] = await db.promise().query(
+    const [result] = await db.query(
       `UPDATE admins
        SET password = ?
        WHERE id = ?`,

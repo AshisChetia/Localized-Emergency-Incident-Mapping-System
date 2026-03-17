@@ -9,6 +9,7 @@ import {
   updateReportStatus,
   getAllReports,
   getReportStats,
+  deleteReport // Added
 } from "../controllers/reportController.js";
 
 import  authMiddleware  from "../middleware/authMiddleware.js";
@@ -21,7 +22,6 @@ import {
 } from "../middleware/uploadMiddleware.js";
 
 // ── Normal User Routes ──────────────────────────────
-// Create a new report (with image upload)
 router.post(
   "/",
   authMiddleware,
@@ -33,7 +33,6 @@ router.post(
   createReport
 );
 
-// Get logged-in user's own reports
 router.get(
   "/my",
   authMiddleware,
@@ -41,8 +40,15 @@ router.get(
   getMyReports
 );
 
+// Delete a report
+router.delete(
+  "/:id",
+  authMiddleware,
+  roleMiddleware("user"),
+  deleteReport
+);
+
 // ── Authority Routes ────────────────────────────────
-// Get all reports filtered by authority's pincode
 router.get(
   "/pincode",
   authMiddleware,
@@ -50,7 +56,6 @@ router.get(
   getReportsByPincode
 );
 
-// Get Chart.js stats for authority dashboard
 router.get(
   "/stats",
   authMiddleware,
@@ -58,7 +63,6 @@ router.get(
   getReportStats
 );
 
-// Update a report's status (pending → resolved)
 router.patch(
   "/:id/status",
   authMiddleware,
@@ -67,7 +71,6 @@ router.patch(
 );
 
 // ── Admin Routes ────────────────────────────────────
-// Get all reports with optional filters
 router.get(
   "/all",
   authMiddleware,
@@ -76,7 +79,6 @@ router.get(
 );
 
 // ── Shared Routes ───────────────────────────────────
-// Get single report by ID (user sees own, authority sees pincode)
 router.get(
   "/:id",
   authMiddleware,

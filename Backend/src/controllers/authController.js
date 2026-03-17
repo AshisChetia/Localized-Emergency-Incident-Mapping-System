@@ -1,3 +1,7 @@
+// ─────────────────────────────────────────
+// controllers/authController.js
+// ─────────────────────────────────────────
+
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
@@ -19,14 +23,13 @@ const generateToken = (id, role) => {
 
 // ── Register User ──────────────────────────
 export const registerUser = async (req, res) => {
-  const { name, email, password, pincode } = req.body;
+  const { name, email, password, pincode, number } = req.body;
 
   try {
-    if (!name || !email || !password || !pincode) {
+    if (!name || !email || !password || !pincode || !number) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Check if user already exists using Model
     const userExists = await User.emailExists(email);
     if (userExists) {
       return res.status(409).json({ message: "Email already registered" });
@@ -34,12 +37,12 @@ export const registerUser = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert user using Model
     const result = await User.create({
       name,
       email,
       password: hashedPassword,
       pincode,
+      number,
     });
 
     const token = generateToken(result.insertId, "user");
@@ -52,12 +55,13 @@ export const registerUser = async (req, res) => {
         name,
         email,
         pincode,
+        number,
         role: "user",
       },
     });
   } catch (error) {
     console.error("Register User Error:", error);
-    return res.status(500).json({ message: "Server error during registration", errorDetails: error.message });
+    return res.status(500).json({ message: "Server error during registration" });
   }
 };
 
@@ -70,7 +74,6 @@ export const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // Find user using Model
     const user = await User.findByEmail(email);
 
     if (!user) {
@@ -92,6 +95,7 @@ export const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         pincode: user.pincode,
+        number: user.number,
         role: "user",
       },
     });
@@ -114,7 +118,6 @@ export const registerAuthority = async (req, res) => {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Check if email already exists using Model
     const authorityExists = await Authority.emailExists(email);
     if (authorityExists) {
       return res.status(409).json({
@@ -124,7 +127,6 @@ export const registerAuthority = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert authority using Model
     await Authority.create({
       name,
       email,
@@ -134,7 +136,7 @@ export const registerAuthority = async (req, res) => {
     });
 
     return res.status(201).json({
-      message: "Registration request submitted successfully. Please wait for Super Admin approval before logging in.",
+      message: "Registration request submitted successfully. Please wait for Super Admin approval.",
     });
   } catch (error) {
     console.error("Register Authority Error:", error);
@@ -151,7 +153,6 @@ export const loginAuthority = async (req, res) => {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // Find authority using Model
     const authority = await Authority.findByEmail(email);
 
     if (!authority) {
@@ -174,7 +175,7 @@ export const loginAuthority = async (req, res) => {
     return res.status(200).json({
       message: "Login successful",
       token,
-      user: {
+      authority: { // FIXED: Sent as 'authority'
         id: authority.id,
         name: authority.name,
         email: authority.email,
@@ -202,7 +203,6 @@ export const loginAdmin = async (req, res) => {
       return res.status(400).json({ message: "Email and password are required" });
     }
 
-    // Find admin using Model
     const admin = await Admin.findByEmail(email);
 
     if (!admin) {
@@ -219,7 +219,7 @@ export const loginAdmin = async (req, res) => {
     return res.status(200).json({
       message: "Admin login successful",
       token,
-      user: {
+      admin: { // FIXED: Sent as 'admin'
         id: admin.id,
         email: admin.email,
         role: "admin",
@@ -238,7 +238,6 @@ export const getMe = async (req, res) => {
   try {
     let userRecord = null;
 
-    // Fetch from correct model based on role
     if (role === "user") {
       userRecord = await User.findById(id);
     } else if (role === "authority") {

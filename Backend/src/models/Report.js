@@ -21,7 +21,7 @@ const Report = {
     longitude,
     pincode,
   }) => {
-    const [result] = await db.promise().query(
+    const [result] = await db.query(
       `INSERT INTO reports
         (user_id, description, image_url, latitude, longitude, pincode, status)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -36,7 +36,7 @@ const Report = {
   //  reporter name and email
   // ═══════════════════════════════════════
   findById: async (id) => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT
           r.id,
           r.user_id,
@@ -63,7 +63,7 @@ const Report = {
   //  ordered by newest first
   // ═══════════════════════════════════════
   findByUserId: async (userId) => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT
           id,
           description,
@@ -88,7 +88,7 @@ const Report = {
   //  resolved sorted by newest
   // ═══════════════════════════════════════
   findByPincode: async (pincode) => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT
           r.id,
           r.user_id,
@@ -150,7 +150,7 @@ const Report = {
 
     query += " ORDER BY r.created_at DESC";
 
-    const [rows] = await db.promise().query(query, params);
+    const [rows] = await db.query(query, params);
     return rows;
   },
 
@@ -160,7 +160,7 @@ const Report = {
   //  or resolved → pending
   // ═══════════════════════════════════════
   updateStatus: async (id, status) => {
-    const [result] = await db.promise().query(
+    const [result] = await db.query(
       `UPDATE reports 
        SET status = ?
        WHERE id = ?`,
@@ -175,7 +175,7 @@ const Report = {
   //  counts for authority dashboard
   // ═══════════════════════════════════════
   getStatsByPincode: async (pincode) => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT
           COUNT(*) AS total,
           SUM(CASE WHEN status = 'pending'  THEN 1 ELSE 0 END) AS pending,
@@ -194,7 +194,7 @@ const Report = {
   //  authority dashboard
   // ═══════════════════════════════════════
   getMonthlyStatsByPincode: async (pincode) => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT
           DATE_FORMAT(created_at, '%b %Y') AS month,
           COUNT(*) AS total,
@@ -215,7 +215,7 @@ const Report = {
   //  Total platform-wide report summary
   // ═══════════════════════════════════════
   getGlobalStats: async () => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT
           COUNT(*) AS total,
           SUM(CASE WHEN status = 'pending'  THEN 1 ELSE 0 END) AS pending,
@@ -231,7 +231,7 @@ const Report = {
   //  per pincode across entire platform
   // ═══════════════════════════════════════
   getStatsByAllPincodes: async () => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT
           pincode,
           COUNT(*) AS total,
@@ -249,7 +249,7 @@ const Report = {
   //  Quick count for user profile stats
   // ═══════════════════════════════════════
   countByUserId: async (userId) => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT
           COUNT(*) AS total,
           SUM(CASE WHEN status = 'pending'  THEN 1 ELSE 0 END) AS pending,
@@ -261,12 +261,13 @@ const Report = {
     return rows[0];
   },
 
+// ═══════════════════════════════════════
+  //  DELETE REPORT
+  //  Allows citizens to delete their own
+  //  reports from the dashboard
   // ═══════════════════════════════════════
-  //  DELETE REPORT BY ID
-  //  Admin level operation only
-  // ═══════════════════════════════════════
-  deleteById: async (id) => {
-    const [result] = await db.promise().query(
+  delete: async (id) => {
+    const [result] = await db.query(
       `DELETE FROM reports WHERE id = ?`,
       [id]
     );

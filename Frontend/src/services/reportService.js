@@ -28,3 +28,7 @@ export const updateReportStatus = (id, status) =>
 // GET /api/reports/stats  → monthly chart data
 export const getReportStats = () =>
   api.get("/reports/stats");
+
+// DELETE /api/reports/:id → Delete report
+export const deleteReport = (id) =>
+  api.delete(`/reports/${id}`);

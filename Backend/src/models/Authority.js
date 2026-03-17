@@ -14,7 +14,7 @@ const Authority = {
   //  Super Admin must approve before login
   // ═══════════════════════════════════════
   create: async ({ name, email, password, pincode, department }) => {
-    const [result] = await db.promise().query(
+    const [result] = await db.query(
       `INSERT INTO authorities
         (name, email, password, pincode, department, is_approved)
        VALUES (?, ?, ?, ?, ?, ?)`,
@@ -28,7 +28,7 @@ const Authority = {
   //  Used during login and duplicate check
   // ═══════════════════════════════════════
   findByEmail: async (email) => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT * FROM authorities WHERE email = ?`,
       [email]
     );
@@ -40,7 +40,7 @@ const Authority = {
   //  Used in authMiddleware token verify
   // ═══════════════════════════════════════
   findById: async (id) => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT
           id,
           name,
@@ -62,7 +62,7 @@ const Authority = {
   //  show all active authority accounts
   // ═══════════════════════════════════════
   findAllApproved: async () => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT
           id,
           name,
@@ -83,7 +83,7 @@ const Authority = {
   //  show requests waiting for approval
   // ═══════════════════════════════════════
   findAllPending: async () => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT
           id,
           name,
@@ -103,7 +103,7 @@ const Authority = {
   //  Full list for admin oversight
   // ═══════════════════════════════════════
   findAll: async () => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT
           id,
           name,
@@ -123,7 +123,7 @@ const Authority = {
   //  Super Admin sets is_approved = true
   // ═══════════════════════════════════════
   approveById: async (id) => {
-    const [result] = await db.promise().query(
+    const [result] = await db.query(
       `UPDATE authorities
        SET is_approved = true
        WHERE id = ?`,
@@ -138,7 +138,7 @@ const Authority = {
   //  permanently from the system
   // ═══════════════════════════════════════
   deleteById: async (id) => {
-    const [result] = await db.promise().query(
+    const [result] = await db.query(
       `DELETE FROM authorities WHERE id = ?`,
       [id]
     );
@@ -150,7 +150,7 @@ const Authority = {
   //  Lightweight duplicate email check
   // ═══════════════════════════════════════
   emailExists: async (email) => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT id FROM authorities WHERE email = ?`,
       [email]
     );
@@ -162,7 +162,7 @@ const Authority = {
   //  Used in Super Admin dashboard stats
   // ═══════════════════════════════════════
   countApproved: async () => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT COUNT(*) AS total
        FROM authorities
        WHERE is_approved = true`
@@ -175,7 +175,7 @@ const Authority = {
   //  Used in Super Admin dashboard stats
   // ═══════════════════════════════════════
   countPending: async () => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT COUNT(*) AS total
        FROM authorities
        WHERE is_approved = false`
@@ -189,7 +189,7 @@ const Authority = {
   //  authorities exist per pincode zone
   // ═══════════════════════════════════════
   getCoverageByPincode: async () => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT
           pincode,
           COUNT(*) AS authority_count,
@@ -208,7 +208,7 @@ const Authority = {
   //  for a specific pincode zone
   // ═══════════════════════════════════════
   findByPincode: async (pincode) => {
-    const [rows] = await db.promise().query(
+    const [rows] = await db.query(
       `SELECT
           id,
           name,

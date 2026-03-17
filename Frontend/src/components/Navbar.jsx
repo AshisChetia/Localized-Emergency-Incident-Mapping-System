@@ -7,7 +7,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { colors, fonts } from "../styles/designTokens";
 import {
-  Menu, X, MapPin, LayoutDashboard, FileText, LogOut, LogIn, UserPlus,
+  Menu, X, MapPin, LayoutDashboard, LogOut, LogIn, UserPlus
 } from "lucide-react";
 
 const Navbar = () => {
@@ -54,13 +54,28 @@ const Navbar = () => {
     return "/";
   };
 
-  // Smooth scroll logic for landing page sections
   const scrollToSection = (e, id) => {
-    if (location.pathname !== "/") return; // Let standard link behavior route to /#id
+    if (location.pathname !== "/") return;
     e.preventDefault();
     const element = document.getElementById(id);
     if (element) element.scrollIntoView({ behavior: "smooth" });
     closeMenu();
+  };
+
+  // ── Smart Profile Link Wrapper ──
+  const ProfileWrapper = ({ children, className, onClick }) => {
+    if (user?.role === "user") {
+      return (
+        <Link 
+          to="/user/profile" 
+          onClick={onClick} 
+          className={`${className} hover:opacity-80 transition-opacity cursor-pointer group`}
+        >
+          {children}
+        </Link>
+      );
+    }
+    return <div className={className}>{children}</div>;
   };
 
   return (
@@ -75,7 +90,7 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-6 lg:px-10 flex items-center justify-between">
         
         {/* Logo */}
-        <Link to="/" onClick={closeMenu} className="flex items-center gap-2 group z-50">
+        <Link to="/user/dashboard" onClick={closeMenu} className="flex items-center gap-2 group z-50">
           <div className="w-9 h-9 rounded-full bg-[var(--c-olive)] flex items-center justify-center group-hover:bg-[var(--c-oliveDark)] transition-colors duration-300 shadow-md">
             <MapPin className="w-4 h-4 text-[var(--c-offWhite)]" strokeWidth={2} />
           </div>
@@ -94,20 +109,13 @@ const Navbar = () => {
               <a href="/#modules" onClick={(e) => scrollToSection(e, "modules")} className="text-sm font-medium text-[var(--c-textSecondary)] hover:text-[var(--c-olive)] transition-colors">Modules</a>
             </>
           ) : (
-            <>
-              <Link to={getDashboardPath()} className="text-sm font-medium text-[var(--c-olive)] flex items-center gap-1.5">
-                <LayoutDashboard className="w-4 h-4" /> Dashboard
-              </Link>
-              {user.role === "user" && (
-                <Link to="/user/dashboard" className="text-sm font-medium text-[var(--c-textSecondary)] hover:text-[var(--c-olive)] flex items-center gap-1.5">
-                  <FileText className="w-4 h-4" /> My Reports
-                </Link>
-              )}
-            </>
+            <Link to={getDashboardPath()} className="text-sm font-medium text-[var(--c-olive)] flex items-center gap-1.5">
+              <LayoutDashboard className="w-4 h-4" /> Dashboard
+            </Link>
           )}
         </div>
 
-        {/* Desktop Right */}
+        {/* Desktop Right Side */}
         <div className="hidden md:flex items-center gap-4 z-50">
           {!user ? (
             <>
@@ -119,27 +127,38 @@ const Navbar = () => {
               </Link>
             </>
           ) : (
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm font-bold text-[var(--c-charcoal)] leading-none mb-1">{user.name || user.email}</p>
-                <span className="text-[10px] uppercase tracking-wider font-bold bg-[var(--c-sage)] text-[var(--c-oliveDark)] px-2 py-0.5 rounded-full">
-                  {user.role === "user" ? "Citizen" : user.role === "authority" ? "Authority" : "Admin"}
-                </span>
-              </div>
-              <button onClick={handleLogout} className="p-2 rounded-full bg-[var(--c-borderLight)] text-[var(--c-textSecondary)] hover:bg-red-100 hover:text-red-600 transition-colors">
+            <div className="flex items-center gap-5">
+              
+              {/* Minimalist Profile Avatar */}
+              <ProfileWrapper className="flex items-center">
+                <div 
+                  className="w-10 h-10 rounded-full bg-[var(--c-olive)] border-2 border-transparent group-hover:border-[var(--c-sage)] shadow-md flex items-center justify-center text-[var(--c-offWhite)] text-lg font-black transition-all"
+                  title={`${user.name || user.email} (${user.role})`}
+                >
+                  {(user.name || user.email || "U")[0].toUpperCase()}
+                </div>
+              </ProfileWrapper>
+              
+              <div className="h-6 w-px bg-[var(--c-borderLight)]"></div>
+
+              <button 
+                onClick={handleLogout} 
+                title="Logout"
+                className="p-2 rounded-full bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] text-[var(--c-textSecondary)] hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors shadow-sm"
+              >
                 <LogOut className="w-4 h-4" />
               </button>
             </div>
           )}
         </div>
 
-        {/* Mobile Toggle */}
+        {/* Mobile Hamburger Toggle */}
         <button onClick={toggleMenu} className="md:hidden p-2 text-[var(--c-charcoal)] z-50">
           {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Dropdown Menu */}
       <div className={`md:hidden absolute top-full left-0 w-full bg-[var(--c-offWhite)] border-b border-[var(--c-borderLight)] shadow-xl transition-all duration-300 overflow-hidden ${menuOpen ? "max-h-screen py-6 opacity-100" : "max-h-0 py-0 opacity-0"}`}>
         <div className="px-6 flex flex-col gap-4">
           {!user ? (
@@ -156,25 +175,24 @@ const Navbar = () => {
             </>
           ) : (
              <>
-               <div className="flex items-center gap-3 mb-2">
-                 <div className="w-10 h-10 rounded-full bg-[var(--c-olive)] flex items-center justify-center text-[var(--c-offWhite)] font-bold">
+               {/* Mobile Menu keeps the name since there is plenty of space */}
+               <ProfileWrapper onClick={closeMenu} className="flex items-center gap-3 mb-2 p-2 rounded-xl hover:bg-white transition-colors">
+                 <div className="w-12 h-12 rounded-full bg-[var(--c-olive)] shadow-md flex items-center justify-center text-[var(--c-offWhite)] text-xl font-black">
                     {(user.name || user.email || "U")[0].toUpperCase()}
                  </div>
                  <div>
-                   <p className="font-bold text-[var(--c-charcoal)]">{user.name || user.email}</p>
-                   <p className="text-xs font-semibold text-[var(--c-textSecondary)] capitalize">{user.role}</p>
+                   <p className="font-bold text-[var(--c-charcoal)] text-lg leading-tight">{user.name || user.email}</p>
+                   <p className="text-xs font-bold text-[var(--c-textSecondary)] capitalize mt-0.5">{user.role}</p>
                  </div>
-               </div>
-               <Link to={getDashboardPath()} onClick={closeMenu} className="flex items-center gap-2 text-lg font-medium text-[var(--c-charcoal)]">
+               </ProfileWrapper>
+               
+               <Link to={getDashboardPath()} onClick={closeMenu} className="flex items-center gap-3 text-lg font-medium text-[var(--c-charcoal)] p-2 hover:bg-white rounded-xl transition-colors">
                   <LayoutDashboard className="w-5 h-5 text-[var(--c-olive)]" /> Dashboard
                </Link>
-               {user.role === "user" && (
-                 <Link to="/user/dashboard" onClick={closeMenu} className="flex items-center gap-2 text-lg font-medium text-[var(--c-charcoal)]">
-                    <FileText className="w-5 h-5 text-[var(--c-olive)]" /> My Reports
-                 </Link>
-               )}
+               
                <div className="h-px bg-[var(--c-borderLight)] my-2"></div>
-               <button onClick={handleLogout} className="flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-red-100 text-red-600">
+               
+               <button onClick={handleLogout} className="flex items-center justify-center gap-2 py-3 rounded-xl font-bold bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors">
                  <LogOut className="w-5 h-5" /> Logout
                </button>
              </>
@@ -184,4 +202,5 @@ const Navbar = () => {
     </nav>
   );
 };
+
 export default Navbar;
