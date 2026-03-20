@@ -15,11 +15,11 @@ import AuthorityRegister from "./pages/auth/AuthorityRegister";
 import AdminLogin from "./pages/auth/AdminLogin";
 
 import Landing from "./pages/Landing";
-import UserDashboard from "./pages/user/UserDashboard";
-import UserProfile from "./pages/user/UserProfile";
-import AuthorityDashboard from "./pages/authority/AuthorityDashboard";
+import UserDashboard from "./pages/user/userDashboard";
+import UserProfile from "./pages/user/userProfile";
+import AuthorityDashboard from "./pages/authority/authorityDashboard";
 import AuthorityProfile from "./pages/authority/authorityProfile";
-import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminDashboard from "./pages/admin/adminDashboard";
 
 const App = () => {
   const location = useLocation();
