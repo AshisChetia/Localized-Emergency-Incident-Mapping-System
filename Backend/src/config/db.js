@@ -1,30 +1,31 @@
-import mysql from "mysql2/promise"
-
-import dotenv from "dotenv"
-
+import mysql from "mysql2/promise";
+import dotenv from "dotenv";
 
 dotenv.config();
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
-  port: process.env.DB_PORT || 3306,
+  port: process.env.DB_PORT || 4000, // TiDB Serverless uses port 4000
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: true } : undefined,
+  // ── TIDB SECURE SSL FIX ──
+  ssl: {
+    minVersion: 'TLSv1.2',
+    rejectUnauthorized: true
+  }
 });
 
 export const connectDB = async () => {
   try {
     const connection = await pool.getConnection();
-    console.log('✅ MySQL Database Connected Successfully');
+    console.log('✅ TiDB Database Connected Successfully');
     connection.release();
   } catch (error) {
-    console.error('❌ MySQL Connection Failed:', error.message);
-    process.exit(1);
+    console.error('❌ TiDB Connection Failed:', error.message);
   }
 };
 

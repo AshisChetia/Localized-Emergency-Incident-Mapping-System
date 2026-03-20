@@ -10,8 +10,10 @@
 import axios from "axios";
 
 // ── Create Axios instance ───────────────
+// Replace lines 14-20 in api.js with this:
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api",
+  // VERCEL FIX: Use a relative path so the frontend automatically talks to the Vercel Serverless backend
+  baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
   headers: {
     "Content-Type": "application/json",
   },
