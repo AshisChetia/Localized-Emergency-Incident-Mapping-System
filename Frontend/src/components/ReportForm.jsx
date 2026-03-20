@@ -14,14 +14,12 @@ import { colors, fonts } from "../styles/designTokens";
 
 // ═══════════════════════════════════════
 //  INDIA GEOFENCE BOUNDS
-//  Any GPS coordinates outside this box
-//  are rejected as anomalous/spoofed.
 // ═══════════════════════════════════════
 const INDIA_BOUNDS = {
-  minLat: 6.0,   // Southern tip (Kanyakumari)
-  maxLat: 37.0,  // Northern tip (Kashmir)
-  minLng: 68.0,  // Western tip (Gujarat)
-  maxLng: 98.0,  // Eastern tip (Arunachal Pradesh)
+  minLat: 6.0,   
+  maxLat: 37.0,  
+  minLng: 68.0,  
+  maxLng: 98.0,  
 };
 
 const isInsideIndia = (lat, lng) =>
@@ -42,7 +40,9 @@ const ReportForm = ({ onSuccess, onClose }) => {
   const [locating, setLocating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const fileInputRef = useRef(null);
+  // ── NEW: Dual Refs for Camera and Gallery ──
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
 
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -90,32 +90,25 @@ const ReportForm = ({ onSuccess, onClose }) => {
   const handleRemoveImage = () => {
     setImageFile(null);
     setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (cameraInputRef.current) cameraInputRef.current.value = "";
+    if (galleryInputRef.current) galleryInputRef.current.value = "";
   };
 
-  // ═══════════════════════════════════════
-  //  STRICT PRODUCTION GPS CAPTURE
-  //  With India Geofence Validation
-  // ═══════════════════════════════════════
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
       toast.error("Geolocation is not supported by your browser.");
       return;
     }
 
-    // Reset any previous location so user always gets fresh coordinates
     setLocation(null);
     setLocating(true);
     setErrors((prev) => ({ ...prev, location: null }));
 
-    // maximumAge: 0 forces the browser to get a NEW location, ignoring cache
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
 
-        // ── GEOFENCE CHECK ──
-        // Reject coordinates outside India (catches VPN/spoofed locations like Korea)
         if (!isInsideIndia(lat, lng)) {
           setLocating(false);
           setErrors((prev) => ({
@@ -261,6 +254,7 @@ const ReportForm = ({ onSuccess, onClose }) => {
                 <label className="flex items-center gap-2 text-sm font-bold text-[var(--c-charcoal)]">
                   <Camera className="w-4 h-4 text-[var(--c-olive)]" /> Incident Photo
                 </label>
+                
                 {imagePreview ? (
                   <div className="relative w-full rounded-2xl overflow-hidden border border-[var(--c-borderLight)] group shadow-sm">
                     <img src={imagePreview} alt="Preview" className="w-full h-48 object-cover" />
@@ -271,24 +265,50 @@ const ReportForm = ({ onSuccess, onClose }) => {
                     </div>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className={`w-full h-36 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors cursor-pointer ${errors.image ? "border-red-400 bg-red-50" : "border-[var(--c-olive)]/30 bg-white hover:bg-[var(--c-sage)]/20 hover:border-[var(--c-olive)]"}`}>
-                    <div className="w-10 h-10 bg-[var(--c-sage)]/50 rounded-full flex items-center justify-center">
-                      <ImageIcon className={`w-5 h-5 ${errors.image ? "text-red-500" : "text-[var(--c-oliveDark)]"}`} />
-                    </div>
-                    <div className="text-center">
-                      <p className={`text-sm font-bold ${errors.image ? "text-red-500" : "text-[var(--c-charcoal)]"}`}>Tap to upload a photo</p>
-                      <p className="text-xs text-gray-500 mt-0.5">JPEG, PNG, WebP • Max 5MB</p>
-                    </div>
-                  </button>
+                  // ── NEW DUAL BUTTON UI ──
+                  <div className="flex gap-3">
+                    <button 
+                      type="button" 
+                      onClick={() => cameraInputRef.current?.click()} 
+                      className={`flex-1 h-32 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors ${errors.image ? "border-red-400 bg-red-50" : "border-[var(--c-olive)]/30 bg-white hover:bg-[var(--c-sage)]/20 hover:border-[var(--c-olive)]"}`}
+                    >
+                      <div className="w-10 h-10 bg-[var(--c-sage)]/50 rounded-full flex items-center justify-center">
+                        <Camera className={`w-5 h-5 ${errors.image ? "text-red-500" : "text-[var(--c-oliveDark)]"}`} />
+                      </div>
+                      <span className={`text-sm font-bold ${errors.image ? "text-red-500" : "text-[var(--c-charcoal)]"}`}>Live Camera</span>
+                    </button>
+                    
+                    <button 
+                      type="button" 
+                      onClick={() => galleryInputRef.current?.click()} 
+                      className={`flex-1 h-32 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-2 transition-colors ${errors.image ? "border-red-400 bg-red-50" : "border-[var(--c-olive)]/30 bg-white hover:bg-[var(--c-sage)]/20 hover:border-[var(--c-olive)]"}`}
+                    >
+                      <div className="w-10 h-10 bg-[var(--c-sage)]/50 rounded-full flex items-center justify-center">
+                        <ImageIcon className={`w-5 h-5 ${errors.image ? "text-red-500" : "text-[var(--c-oliveDark)]"}`} />
+                      </div>
+                      <span className={`text-sm font-bold ${errors.image ? "text-red-500" : "text-[var(--c-charcoal)]"}`}>Gallery</span>
+                    </button>
+                  </div>
                 )}
+                
+                {/* ── TWO HIDDEN INPUTS TO FORCE HARDWARE BEHAVIOR ── */}
                 <input
-                  ref={fileInputRef}
+                  ref={cameraInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment" 
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+                <input
+                  ref={galleryInputRef}
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
                   className="hidden"
                 />
-                {errors.image && <p className="text-red-500 text-xs font-medium">{errors.image}</p>}
+                
+                {errors.image && <p className="text-red-500 text-xs font-medium text-center">{errors.image}</p>}
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -312,8 +332,9 @@ const ReportForm = ({ onSuccess, onClose }) => {
                         {locating ? "Fetching..." : "Recapture"}
                       </button>
                     </div>
+                    {/* FIXED GOOGLE MAPS LINK */}
                     <a
-                      href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}`}
+                      href={`https://maps.google.com/?q=${location.latitude},${location.longitude}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center justify-center gap-1.5 text-xs font-bold text-[var(--c-olive)] bg-white/80 border border-[var(--c-olive)]/20 rounded-lg py-1.5 hover:bg-white transition-colors"
