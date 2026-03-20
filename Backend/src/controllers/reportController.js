@@ -15,63 +15,56 @@ const uploadToCloudinary = (fileBuffer, folderName) => {
   });
 };
 
-// ═════════════════════════════════════════
-//  CREATE REPORT (Fixed Pincode Logic)
-// ═════════════════════════════════════════
+// ─────────────────────────────────────────
+// src/controllers/reportController.js
+// ─────────────────────────────────────────
+
 const createReport = async (req, res) => {
+  // We ONLY accept visual coordinates and description from the frontend.
   const { description, latitude, longitude } = req.body;
   const userId = req.user.id;
+  
+  // 👉 THE GUARANTEED ROUTING LOCK: 
+  // We grab the citizen's registered pincode directly from their verified Auth Token!
+  const routingPincode = req.user.pincode; 
 
   try {
-    if (!description || !latitude || !longitude) {
-      return res.status(400).json({ message: "Description, latitude, and longitude are required" });
+    if (!description || latitude === undefined || longitude === undefined) {
+      return res.status(400).json({ message: "Description and precise location are required" });
     }
 
     if (!req.file) {
       return res.status(400).json({ message: "Incident image is required" });
     }
 
+    // ── 1. UPLOAD IMAGE ──
     let imageUrl = "";
     try {
       const uploadResult = await uploadToCloudinary(req.file.buffer, "emergency_reports");
       imageUrl = uploadResult.secure_url;
     } catch (uploadError) {
-      return res.status(500).json({ message: "Image upload failed. Please try again." });
+      return res.status(500).json({ message: "Image upload failed." });
     }
 
-    // ── PINCODE FIX: Strict Validation & Fallback ──
-    let incidentPincode = req.user.pincode; // Default to user's home pincode
-    
-    try {
-      const geoResult = await reverseGeocode(parseFloat(latitude), parseFloat(longitude));
-      const geoPincode = geoResult?.toString().trim();
-      
-      // Only use the geocoded pincode if it is exactly 6 digits
-      if (geoPincode && /^\d{6}$/.test(geoPincode)) {
-        incidentPincode = geoPincode;
-      }
-    } catch (geoError) {
-      console.warn("Geocoding failed, falling back to citizen's registered pincode.");
-    }
-
+    // ── 2. DATABASE SAVE ──
     const result = await Report.create({
       userId,
       description,
       imageUrl,
-      latitude: parseFloat(latitude),
-      longitude: parseFloat(longitude),
-      pincode: incidentPincode
+      latitude: parseFloat(latitude),   // Strict physical GPS point
+      longitude: parseFloat(longitude), // Strict physical GPS point
+      pincode: routingPincode           // strict Database Routing Token
     });
 
     const newReport = await Report.findById(result.insertId);
 
     return res.status(201).json({
-      message: "Report submitted successfully",
+      message: `Report routed successfully to your home zone: ${routingPincode}`,
       report: newReport,
     });
   } catch (error) {
     console.error("Create Report Error:", error);
-    return res.status(500).json({ message: "Server error while creating report", errorDetails: error.message });
+    return res.status(500).json({ message: "Server error while creating report" });
   }
 };
 
@@ -86,8 +79,6 @@ const getMyReports = async (req, res) => {
 };
 
 const getReportsByPincode = async (req, res) => {
-  // Grab the pincode from the URL parameter (:pincode) 
-  // falling back to the authority's own pincode if needed
   const targetPincode = req.params.pincode || req.user.pincode;
 
   try {
@@ -175,9 +166,6 @@ const getReportStats = async (req, res) => {
   }
 };
 
-// ═════════════════════════════════════════
-//  DELETE REPORT
-// ═════════════════════════════════════════
 const deleteReport = async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
@@ -189,7 +177,6 @@ const deleteReport = async (req, res) => {
       return res.status(404).json({ message: "Report not found" });
     }
 
-    // Security: Only the user who created it can delete it
     if (report.user_id !== userId) {
       return res.status(403).json({ message: "You are not authorized to delete this report" });
     }

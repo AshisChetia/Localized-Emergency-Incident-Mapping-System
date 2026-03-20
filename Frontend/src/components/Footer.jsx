@@ -11,6 +11,13 @@ const Footer = () => {
   const location = useLocation();
   const isLanding = location.pathname === "/";
 
+  // ── THE ULTIMATE RULE ──────────────────────────────────
+  // If the user is NOT on the exact landing page ("/"), 
+  // hide the footer completely.
+  if (!isLanding) {
+    return null;
+  }
+
   // Map tokens to CSS variables for dynamic hover effects
   const footerStyle = {
     "--c-offWhite": colors.offWhite,
@@ -28,21 +35,19 @@ const Footer = () => {
   return (
     <footer
       style={footerStyle}
-      className={`bg-[var(--c-offWhite)] border-t border-[var(--c-borderLight)] mt-auto w-full ${
-        isLanding ? "px-0" : "px-4 sm:px-6 lg:px-8" // Match main layout constraints
-      }`}
+      className="bg-[var(--c-offWhite)] border-t border-[var(--c-borderLight)] mt-auto w-full px-0"
     >
-      <div className={`max-w-7xl mx-auto py-12 lg:py-16 ${isLanding ? "px-6 lg:px-10" : ""}`}>
+      <div className="max-w-7xl mx-auto py-12 lg:py-16 px-6 lg:px-10">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-8 lg:gap-12">
           
-          {/* ── Brand Column (Takes up more space) ── */}
+          {/* ── Brand Column ── */}
           <div className="md:col-span-5 flex flex-col gap-6">
             <Link to="/" className="flex items-center gap-2 group w-fit">
               <div className="w-10 h-10 rounded-full bg-[var(--c-sage)] flex items-center justify-center group-hover:bg-[var(--c-olive)] transition-colors duration-500 shadow-sm">
                 <MapPin className="w-5 h-5 text-[var(--c-oliveDark)] group-hover:text-[var(--c-offWhite)] transition-colors duration-500" strokeWidth={1.5} />
               </div>
               <span className="text-[var(--c-charcoal)] font-bold text-xl tracking-tight" style={{ fontFamily: fonts.heading }}>
-                Emergency<span className="text-[var(--c-accentGold)] font-medium italic">Map</span>
+                LEI<span className="text-[var(--c-accentGold)] font-medium italic">MS</span>
               </span>
             </Link>
             <p className="text-[var(--c-textSecondary)] text-base leading-relaxed max-w-sm">
@@ -60,15 +65,6 @@ const Footer = () => {
               Platform
             </h4>
             <div className="flex flex-col gap-3">
-              <Link to="/" className="text-[var(--c-textSecondary)] hover:text-[var(--c-olive)] text-sm font-medium transition-colors w-fit flex items-center gap-1 group">
-                Home <ArrowUpRight className="w-3 h-3 opacity-0 -translate-y-1 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all" />
-              </Link>
-              <Link to="/register" className="text-[var(--c-textSecondary)] hover:text-[var(--c-olive)] text-sm font-medium transition-colors w-fit flex items-center gap-1 group">
-                Citizen Portal <ArrowUpRight className="w-3 h-3 opacity-0 -translate-y-1 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all" />
-              </Link>
-              <Link to="/authority/login" className="text-[var(--c-textSecondary)] hover:text-[var(--c-olive)] text-sm font-medium transition-colors w-fit flex items-center gap-1 group">
-                Authority Portal <ArrowUpRight className="w-3 h-3 opacity-0 -translate-y-1 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all" />
-              </Link>
               <Link to="/admin/login" className="text-[var(--c-textSecondary)] hover:text-[var(--c-olive)] text-sm font-medium transition-colors w-fit flex items-center gap-1 group">
                 Super Admin <ArrowUpRight className="w-3 h-3 opacity-0 -translate-y-1 translate-x-1 group-hover:opacity-100 group-hover:translate-y-0 group-hover:translate-x-0 transition-all" />
               </Link>

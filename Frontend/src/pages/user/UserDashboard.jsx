@@ -11,9 +11,23 @@ import Loader from "../../components/Loader";
 import toast from "react-hot-toast";
 import {
   Plus, FileText, CheckCircle, AlertCircle, Search, 
-  Activity, X, Trash2, MapPin, Clock
+  Activity, X, Trash2, MapPin, Clock,
+  LayoutGrid, Map as MapIcon, Navigation // Added for Map Toggle
 } from "lucide-react";
 import { colors, fonts } from "../../styles/designTokens";
+
+// ── LEAFLET MAP IMPORTS ──
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// Fix for default Leaflet markers not loading in React
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
 
 const TABS = [
   { key: "all", label: "All Reports" },
@@ -33,6 +47,7 @@ const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [viewMode, setViewMode] = useState("grid"); // NEW: "grid" or "map"
   
   // ── Modal state ─────────────────────────
   const [selectedReport, setSelectedReport] = useState(null);
@@ -269,8 +284,11 @@ const UserDashboard = () => {
           </div>
         </div>
 
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 hide-scrollbar -mx-4 px-4 md:mx-0 md:px-0">
+        {/* ── TOOLBAR (TABS, MAP TOGGLE, SEARCH) ── */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+          
+          {/* Tabs */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 hide-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
@@ -286,15 +304,44 @@ const UserDashboard = () => {
             ))}
           </div>
 
-          <div className="relative w-full md:w-72 shrink-0">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search reports..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-[var(--c-borderLight)] rounded-full pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[var(--c-olive)] focus:ring-1 focus:ring-[var(--c-olive)] shadow-sm transition-all"
-            />
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+            {/* Map vs Grid Toggle */}
+            <div className="flex items-center gap-1 bg-white border border-[var(--c-borderLight)] rounded-xl p-1 shadow-sm shrink-0 w-full sm:w-auto">
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`flex-1 sm:flex-none p-2 sm:px-4 sm:py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-bold transition-all ${
+                  viewMode === "grid" 
+                    ? "bg-[var(--c-charcoal)] text-white shadow-md" 
+                    : "text-[var(--c-textSecondary)] hover:text-[var(--c-charcoal)] hover:bg-[var(--c-sage)]/30"
+                }`}
+              >
+                <LayoutGrid className="w-4 h-4" /> 
+                <span>Grid</span>
+              </button>
+              <button
+                onClick={() => setViewMode("map")}
+                className={`flex-1 sm:flex-none p-2 sm:px-4 sm:py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-bold transition-all ${
+                  viewMode === "map" 
+                    ? "bg-[var(--c-charcoal)] text-white shadow-md" 
+                    : "text-[var(--c-textSecondary)] hover:text-[var(--c-charcoal)] hover:bg-[var(--c-sage)]/30"
+                }`}
+              >
+                <MapIcon className="w-4 h-4" /> 
+                <span>Map</span>
+              </button>
+            </div>
+
+            {/* Search Bar */}
+            <div className="relative w-full lg:w-72 shrink-0">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search reports..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full bg-white border border-[var(--c-borderLight)] rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-[var(--c-olive)] focus:ring-1 focus:ring-[var(--c-olive)] shadow-sm transition-all"
+              />
+            </div>
           </div>
         </div>
 
@@ -340,7 +387,8 @@ const UserDashboard = () => {
                 </button>
               )}
             </div>
-          ) : (
+          ) : viewMode === "grid" ? (
+            // ── GRID VIEW ──
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredReports.map((report) => (
                 <ReportCard
@@ -350,6 +398,63 @@ const UserDashboard = () => {
                   onClick={setSelectedReport}
                 />
               ))}
+            </div>
+          ) : (
+            // ── MAP VIEW ──
+            <div className="w-full h-[500px] bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] rounded-3xl overflow-hidden shadow-inner relative z-0">
+              <MapContainer 
+                center={[filteredReports[0]?.latitude || 26.1445, filteredReports[0]?.longitude || 91.7362]} 
+                zoom={13} 
+                className="w-full h-full z-0"
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                
+                {filteredReports.map((report) => (
+                  report.latitude && report.longitude && (
+                    <Marker key={report.id} position={[report.latitude, report.longitude]}>
+                      <Popup className="rounded-xl overflow-hidden shadow-lg border-0 p-0 m-0">
+                        <div className="p-1 min-w-[200px] font-sans">
+                          {report.image_url && (
+                            <img 
+                              src={report.image_url} 
+                              alt="Incident" 
+                              className="w-full h-24 object-cover rounded-lg mb-2"
+                            />
+                          )}
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                              report.status === "pending" ? "bg-[#FFF8E6] text-[#d4af37]" : "bg-[#87a96b]/30 text-[#4b5320]"
+                            }`}>
+                              {report.status}
+                            </span>
+                            <span className="text-xs text-gray-500">#{report.id}</span>
+                          </div>
+                          <p className="text-sm font-bold text-[#333333] truncate mt-1">
+                            {report.description}
+                          </p>
+                          <a
+                            href={`https://www.google.com/maps?q=${report.latitude},${report.longitude}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-2 flex items-center justify-center gap-1.5 w-full bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold py-1.5 rounded-lg transition-colors border border-blue-200"
+                          >
+                            <MapPin className="w-3 h-3" /> Open in Google Maps
+                          </a>
+                          <button 
+                            onClick={() => setSelectedReport(report)}
+                            className="mt-1.5 flex items-center justify-center gap-1.5 w-full bg-[#faf9f6] hover:bg-[#87a96b]/50 text-[#4b5320] text-xs font-bold py-1.5 rounded-lg transition-colors border border-[#e5e7eb]"
+                          >
+                            <FileText className="w-3 h-3" /> View Details
+                          </button>
+                        </div>
+                      </Popup>
+                    </Marker>
+                  )
+                ))}
+              </MapContainer>
             </div>
           )}
         </div>
@@ -366,6 +471,8 @@ const UserDashboard = () => {
         }
         .animate-modal-backdrop { animation: modalFadeIn 0.3s ease-out forwards; }
         .animate-modal-card { animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .leaflet-popup-content-wrapper { border-radius: 12px; padding: 4px; }
+        .leaflet-popup-content { margin: 8px; }
       `}} />
     </div>
   );

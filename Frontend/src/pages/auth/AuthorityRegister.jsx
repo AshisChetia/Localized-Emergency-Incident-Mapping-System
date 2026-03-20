@@ -12,15 +12,9 @@ import { colors, fonts } from "../../styles/designTokens";
 
 const DEPARTMENTS = [
   "Municipal Corporation",
-  "Fire Department",
-  "Police Department",
   "Public Works Department",
   "Electricity Department",
   "Water Supply Department",
-  "Health Department",
-  "Disaster Management",
-  "Traffic Police",
-  "Other",
 ];
 
 const AuthorityRegister = () => {

@@ -12,12 +12,12 @@ const User = {
   //  CREATE USER
   //  Called during registration
   // ═══════════════════════════════════════
-  create: async ({ name, email, password, pincode }) => {
+  create: async ({ name, email, password, pincode, number }) => {
     const [result] = await db.query(
       `INSERT INTO users 
-        (name, email, password, pincode) 
-       VALUES (?, ?, ?, ?)`,
-      [name, email, password, pincode]
+        (name, email, password, pincode, number) 
+       VALUES (?, ?, ?, ?, ?)`,
+      [name, email, password, pincode, number]
     );
     return result;
   },
