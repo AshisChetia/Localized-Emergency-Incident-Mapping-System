@@ -266,11 +266,10 @@ const AuthorityDashboard = () => {
           {overviewMode === "map" ? (
             <div className="w-full h-[500px] bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] rounded-3xl overflow-hidden shadow-sm relative z-0">
               <MapContainer
-                // ── MAP RENDERING RULES ──
                 key={filteredReports.length > 0 ? filteredReports[0].id : "empty-assam-view"}
                 center={filteredReports.length > 0 
                   ? [filteredReports[0].latitude, filteredReports[0].longitude] 
-                  : [26.2006, 92.9376] // Assam fallback if zone is totally empty
+                  : [26.2006, 92.9376] 
                 }
                 zoom={filteredReports.length > 0 ? 13 : 7}
                 className="w-full h-full z-0"
@@ -295,17 +294,9 @@ const AuthorityDashboard = () => {
                             <span className="text-xs text-gray-500">#{report.id}</span>
                           </div>
                           <p className="text-sm font-bold text-[#333333] truncate mt-1">{report.description}</p>
-                          <a
-                            href={`https://www.google.com/maps?q=${report.latitude},${report.longitude}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-2 flex items-center justify-center gap-1.5 w-full bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold py-1.5 rounded-lg transition-colors border border-blue-200"
-                          >
-                            <MapPin className="w-3 h-3" /> Open in Google Maps
-                          </a>
                           <button
                             onClick={() => handleReportClick(report)}
-                            className="mt-1.5 flex items-center justify-center gap-1.5 w-full bg-[#faf9f6] hover:bg-[#87a96b]/50 text-[#4b5320] text-xs font-bold py-1.5 rounded-lg transition-colors border border-[#e5e7eb]"
+                            className="mt-3 flex items-center justify-center gap-1.5 w-full bg-[#faf9f6] hover:bg-[#87a96b]/50 text-[#4b5320] text-xs font-bold py-1.5 rounded-lg transition-colors border border-[#e5e7eb]"
                           >
                             <FileText className="w-3 h-3" /> View Details
                           </button>
@@ -334,7 +325,7 @@ const AuthorityDashboard = () => {
                 </span>
               </h2>
 
-              <div className="flex items-center gap-1 bg-white border border-[var(--c-borderLight)] rounded-xl p-1 shadow-sm">
+              <div className="flex items-center gap-1 bg-white border border-[var(--c-borderLight)] rounded-xl p-1 shadow-sm shrink-0">
                 <button onClick={() => setViewMode("grid")} className={`p-2 rounded-lg transition-all ${viewMode === "grid" ? "bg-[var(--c-sage)] text-[var(--c-oliveDark)] shadow-sm" : "text-gray-400 hover:text-[var(--c-charcoal)]"}`}>
                   <LayoutGrid className="w-4 h-4" />
                 </button>
@@ -344,8 +335,9 @@ const AuthorityDashboard = () => {
               </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-3">
-              <div className="relative flex-1">
+            {/* ── FIXED MOBILE TOOLBAR (Scrollable, no clipping) ── */}
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="relative w-full lg:flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <input
                   type="text"
@@ -356,7 +348,7 @@ const AuthorityDashboard = () => {
                 />
               </div>
 
-              <div className="flex items-center gap-2 w-full md:w-auto">
+              <div className="flex items-center gap-2 w-full lg:w-auto overflow-x-auto hide-scrollbar pb-2 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pb-0">
                 <div className="relative shrink-0 z-20">
                   <button onClick={() => setShowSortMenu((p) => !p)} className="flex items-center gap-2 h-full bg-white border border-[var(--c-borderLight)] hover:bg-[var(--c-offWhite)] text-[var(--c-charcoal)] text-sm font-bold px-4 py-2.5 rounded-full transition-all shadow-sm">
                     <SlidersHorizontal className="w-4 h-4" />
@@ -365,8 +357,8 @@ const AuthorityDashboard = () => {
                   </button>
                   {showSortMenu && (
                     <>
-                      <div className="fixed inset-0" onClick={() => setShowSortMenu(false)} />
-                      <div className="absolute right-0 top-full mt-2 bg-white border border-[var(--c-borderLight)] rounded-2xl shadow-xl overflow-hidden w-48 py-2">
+                      <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
+                      <div className="absolute left-0 top-full mt-2 bg-white border border-[var(--c-borderLight)] rounded-2xl shadow-xl overflow-hidden w-48 py-2 z-20">
                         {SORT_OPTIONS.map((opt) => (
                           <button key={opt.key} onClick={() => { setSortKey(opt.key); setShowSortMenu(false); }} className={`w-full text-left px-5 py-3 text-sm transition-colors ${sortKey === opt.key ? "bg-[var(--c-sage)]/50 text-[var(--c-oliveDark)] font-bold" : "text-[var(--c-charcoal)] hover:bg-[var(--c-offWhite)] font-medium"}`}>
                             {opt.label}
@@ -377,13 +369,15 @@ const AuthorityDashboard = () => {
                   )}
                 </div>
 
-                <div className="flex bg-white border border-[var(--c-borderLight)] rounded-full p-1 gap-1 shadow-sm overflow-x-auto hide-scrollbar">
+                <div className="w-px h-6 bg-[var(--c-borderLight)] shrink-0 hidden sm:block"></div>
+
+                <div className="flex items-center gap-2 shrink-0">
                   {TABS.map((tab) => {
                     const count = tab.key === "all" ? stats.total : tab.key === "pending" ? stats.pending : stats.resolved;
                     return (
-                      <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`text-sm font-bold px-4 py-2 rounded-full transition-all flex items-center whitespace-nowrap gap-2 ${activeTab === tab.key ? "bg-[var(--c-charcoal)] text-white shadow-md" : "text-[var(--c-textSecondary)] hover:text-[var(--c-charcoal)] hover:bg-[var(--c-offWhite)]"}`}>
+                      <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`text-sm font-bold px-4 py-2.5 rounded-full transition-all flex items-center whitespace-nowrap gap-2 border shadow-sm ${activeTab === tab.key ? "bg-[var(--c-charcoal)] text-white border-[var(--c-charcoal)]" : "bg-white text-[var(--c-textSecondary)] border-[var(--c-borderLight)] hover:text-[var(--c-charcoal)] hover:bg-[var(--c-offWhite)]"}`}>
                         {tab.label}
-                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${activeTab === tab.key ? "bg-white/20" : "bg-[var(--c-offWhite)] border border-[var(--c-borderLight)]"}`}>{count}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full ${activeTab === tab.key ? "bg-white/20" : "bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] text-[var(--c-textSecondary)]"}`}>{count}</span>
                       </button>
                     );
                   })}
