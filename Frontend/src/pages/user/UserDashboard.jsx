@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 import {
   Plus, FileText, CheckCircle, AlertCircle, Search, 
   Activity, X, Trash2, MapPin, Clock,
-  LayoutGrid, Map as MapIcon, Navigation // Added for Map Toggle
+  LayoutGrid, Map as MapIcon, Navigation
 } from "lucide-react";
 import { colors, fonts } from "../../styles/designTokens";
 
@@ -47,7 +47,7 @@ const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showForm, setShowForm] = useState(false);
-  const [viewMode, setViewMode] = useState("grid"); // NEW: "grid" or "map"
+  const [viewMode, setViewMode] = useState("grid"); // "grid" or "map"
   
   // ── Modal state ─────────────────────────
   const [selectedReport, setSelectedReport] = useState(null);
@@ -141,7 +141,6 @@ const UserDashboard = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-[var(--c-charcoal)]/40 backdrop-blur-sm animate-modal-backdrop">
           <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-modal-card">
             
-            {/* Header */}
             <div className="px-6 py-4 border-b border-[var(--c-borderLight)] flex items-center justify-between shrink-0 bg-[var(--c-offWhite)]">
               <h2 className="text-[var(--c-charcoal)] font-black text-xl" style={{ fontFamily: fonts.heading }}>
                 Incident Details
@@ -154,9 +153,7 @@ const UserDashboard = () => {
               </button>
             </div>
 
-            {/* Scrollable Body */}
             <div className="overflow-y-auto p-6 flex flex-col gap-6 hide-scrollbar">
-              
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   {selectedReport.status === "resolved" ? (
@@ -206,10 +203,8 @@ const UserDashboard = () => {
                   </p>
                 </div>
               </div>
-
             </div>
 
-            {/* Footer Actions */}
             <div className="px-6 py-4 border-t border-[var(--c-borderLight)] bg-[var(--c-offWhite)] shrink-0 flex items-center justify-between">
               <button
                 onClick={() => handleDelete(selectedReport.id)}
@@ -231,7 +226,6 @@ const UserDashboard = () => {
                 Close
               </button>
             </div>
-
           </div>
         </div>
       )}
@@ -285,7 +279,7 @@ const UserDashboard = () => {
         </div>
 
         {/* ── TOOLBAR (TABS, MAP TOGGLE, SEARCH) ── */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
           
           {/* Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2 lg:pb-0 hide-scrollbar -mx-4 px-4 lg:mx-0 lg:px-0">
@@ -304,9 +298,10 @@ const UserDashboard = () => {
             ))}
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
-            {/* Map vs Grid Toggle */}
-            <div className="flex items-center gap-1 bg-white border border-[var(--c-borderLight)] rounded-xl p-1 shadow-sm shrink-0 w-full sm:w-auto">
+          {/* View Toggle & Search */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
+            
+            <div className="flex items-center gap-1 bg-white border border-[var(--c-borderLight)] rounded-xl p-1 shadow-sm shrink-0">
               <button
                 onClick={() => setViewMode("grid")}
                 className={`flex-1 sm:flex-none p-2 sm:px-4 sm:py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-bold transition-all ${
@@ -331,7 +326,6 @@ const UserDashboard = () => {
               </button>
             </div>
 
-            {/* Search Bar */}
             <div className="relative w-full lg:w-72 shrink-0">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -345,6 +339,7 @@ const UserDashboard = () => {
           </div>
         </div>
 
+        {/* ── MAIN DATA RENDERING ── */}
         <div className="min-h-[300px]">
           {loading ? (
             <div className="flex flex-col items-center justify-center h-64 text-[var(--c-textSecondary)] gap-4">
@@ -359,56 +354,17 @@ const UserDashboard = () => {
                 Try Again
               </button>
             </div>
-          ) : filteredReports.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-center bg-white border border-[var(--c-borderLight)] rounded-3xl p-8 shadow-sm">
-              <div className="w-16 h-16 bg-[var(--c-sage)] rounded-full flex items-center justify-center mb-4">
-                <Activity className="w-8 h-8 text-[var(--c-oliveDark)]" />
-              </div>
-              <h3 className="text-xl font-black text-[var(--c-charcoal)] mb-2" style={{ fontFamily: fonts.heading }}>
-                {searchQuery
-                  ? "No matching reports found"
-                  : activeTab !== "all"
-                  ? `No ${activeTab} reports`
-                  : "Your dashboard is quiet"}
-              </h3>
-              <p className="text-[var(--c-textSecondary)] text-sm max-w-sm mb-6">
-                {searchQuery
-                  ? "Try adjusting your search terms to find what you're looking for."
-                  : "You haven't submitted any civic issues yet. Spot a problem in your neighborhood? Let the authorities know!"}
-              </p>
-              
-              {!searchQuery && activeTab === "all" && (
-                <button
-                  onClick={() => setShowForm(true)}
-                  className="flex items-center gap-2 bg-[var(--c-sage)] text-[var(--c-oliveDark)] hover:bg-[var(--c-olive)] hover:text-white px-6 py-3 rounded-full text-sm font-bold transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  Submit Your First Report
-                </button>
-              )}
-            </div>
-          ) : viewMode === "grid" ? (
-            // ── GRID VIEW ──
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredReports.map((report) => (
-                <ReportCard
-                  key={report.id}
-                  report={report}
-                  mode="user"
-                  onClick={setSelectedReport}
-                />
-              ))}
-            </div>
-          ) : (
-            // ── MAP VIEW ──
+          ) : viewMode === "map" ? (
+            // ── MAP VIEW (Always renders if Map Tab is selected, even if empty) ──
             <div className="w-full h-[500px] bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] rounded-3xl overflow-hidden shadow-inner relative z-0">
               <MapContainer 
+                key={filteredReports.length > 0 ? filteredReports[0].id : "empty-map"}
                 center={[filteredReports[0]?.latitude || 26.1445, filteredReports[0]?.longitude || 91.7362]} 
                 zoom={13} 
                 className="w-full h-full z-0"
               >
                 <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  attribution='© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 
@@ -436,7 +392,7 @@ const UserDashboard = () => {
                             {report.description}
                           </p>
                           <a
-                            href={`https://www.google.com/maps?q=${report.latitude},${report.longitude}`}
+                            href={`https://maps.google.com/?q=${report.latitude},${report.longitude}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="mt-2 flex items-center justify-center gap-1.5 w-full bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold py-1.5 rounded-lg transition-colors border border-blue-200"
@@ -455,6 +411,47 @@ const UserDashboard = () => {
                   )
                 ))}
               </MapContainer>
+            </div>
+          ) : filteredReports.length === 0 ? (
+            // ── GRID VIEW: EMPTY STATE (Perfectly spaced for Mobile) ──
+            <div className="flex flex-col items-center justify-center text-center bg-white border border-[var(--c-borderLight)] rounded-3xl p-6 sm:p-10 shadow-sm py-12 mb-8">
+              <div className="w-16 h-16 bg-[var(--c-sage)] rounded-full flex items-center justify-center mb-5 shrink-0">
+                <Activity className="w-8 h-8 text-[var(--c-oliveDark)]" />
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-[var(--c-charcoal)] mb-3" style={{ fontFamily: fonts.heading }}>
+                {searchQuery
+                  ? "No matching reports found"
+                  : activeTab !== "all"
+                  ? `No ${activeTab} reports`
+                  : "Your dashboard is quiet"}
+              </h3>
+              <p className="text-[var(--c-textSecondary)] text-sm max-w-sm mb-6">
+                {searchQuery
+                  ? "Try adjusting your search terms to find what you're looking for."
+                  : "You haven't submitted any civic issues yet. Spot a problem in your neighborhood? Let the authorities know!"}
+              </p>
+              
+              {!searchQuery && activeTab === "all" && (
+                <button
+                  onClick={() => setShowForm(true)}
+                  className="mt-2 w-full sm:w-auto flex items-center justify-center gap-2 bg-[var(--c-sage)] text-[var(--c-oliveDark)] hover:bg-[var(--c-olive)] hover:text-white px-6 py-3.5 rounded-full text-sm font-bold transition-colors shadow-sm"
+                >
+                  <Plus className="w-5 h-5" />
+                  Submit Your First Report
+                </button>
+              )}
+            </div>
+          ) : (
+            // ── GRID VIEW: DATA REPORTS ──
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredReports.map((report) => (
+                <ReportCard
+                  key={report.id}
+                  report={report}
+                  mode="user"
+                  onClick={setSelectedReport}
+                />
+              ))}
             </div>
           )}
         </div>

@@ -34,13 +34,13 @@ const ReportForm = ({ onSuccess, onClose }) => {
   const { user } = useAuth();
 
   const [description, setDescription] = useState("");
-  const [imageFile,   setImageFile]   = useState(null);
+  const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [location, setLocation]       = useState(null);
-  const [errors, setErrors]           = useState({});
+  const [location, setLocation] = useState(null);
+  const [errors, setErrors] = useState({});
 
-  const [locating,    setLocating]    = useState(false);
-  const [submitting,  setSubmitting]  = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const fileInputRef = useRef(null);
 
@@ -163,7 +163,7 @@ const ReportForm = ({ onSuccess, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (submitting) return; 
+    if (submitting) return;
 
     if (!validate()) {
       toast.error("Please fill all required fields");
@@ -176,9 +176,9 @@ const ReportForm = ({ onSuccess, onClose }) => {
     try {
       const formData = new FormData();
       formData.append("description", description.trim());
-      formData.append("latitude",    location.latitude);
-      formData.append("longitude",   location.longitude);
-      formData.append("image",       imageFile);
+      formData.append("latitude", location.latitude);
+      formData.append("longitude", location.longitude);
+      formData.append("image", imageFile);
 
       await createReport(formData);
 
@@ -196,7 +196,8 @@ const ReportForm = ({ onSuccess, onClose }) => {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes modalSlideUp { 
           from { opacity: 0; transform: translateY(20px) scale(0.95); } 
@@ -210,7 +211,7 @@ const ReportForm = ({ onSuccess, onClose }) => {
 
       <div style={formStyle} className="fixed inset-0 z-[100] flex items-center justify-center bg-[var(--c-charcoal)]/40 backdrop-blur-sm p-4 sm:p-6 animate-modal-backdrop">
         <div className="relative w-full max-w-lg bg-[var(--c-offWhite)] rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] animate-modal-card">
-          
+
           <div className="bg-white px-6 py-5 border-b border-[var(--c-borderLight)] flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-[var(--c-sage)] rounded-full flex items-center justify-center">
@@ -247,9 +248,8 @@ const ReportForm = ({ onSuccess, onClose }) => {
                   }}
                   placeholder="Describe the issue clearly..."
                   rows={4}
-                  className={`w-full bg-white border rounded-xl px-4 py-3 text-[var(--c-textPrimary)] text-sm resize-none focus:outline-none focus:ring-1 transition-colors ${
-                    errors.description ? "border-red-400 focus:ring-red-400" : "border-[var(--c-borderLight)] focus:ring-[var(--c-olive)] focus:border-[var(--c-olive)]"
-                  }`}
+                  className={`w-full bg-white border rounded-xl px-4 py-3 text-[var(--c-textPrimary)] text-sm resize-none focus:outline-none focus:ring-1 transition-colors ${errors.description ? "border-red-400 focus:ring-red-400" : "border-[var(--c-borderLight)] focus:ring-[var(--c-olive)] focus:border-[var(--c-olive)]"
+                    }`}
                 />
                 <div className="flex items-center justify-between">
                   {errors.description ? <p className="text-red-500 text-xs font-medium">{errors.description}</p> : <span />}
@@ -281,7 +281,13 @@ const ReportForm = ({ onSuccess, onClose }) => {
                     </div>
                   </button>
                 )}
-                <input ref={fileInputRef} type="file" accept="image/jpeg,image/jpg,image/png,image/webp" onChange={handleImageChange} className="hidden" />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
                 {errors.image && <p className="text-red-500 text-xs font-medium">{errors.image}</p>}
               </div>
 
