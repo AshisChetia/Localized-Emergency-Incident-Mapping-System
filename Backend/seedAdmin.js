@@ -7,9 +7,15 @@ dotenv.config();
   try {
     const pool = mysql.createPool({
       host: process.env.DB_HOST,
+      port: process.env.DB_PORT || 4000, // <-- Added TiDB Port
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
+      // 👇 ADDED THIS EXACT SSL BLOCK FOR TiDB 👇
+      ssl: {
+        minVersion: 'TLSv1.2',
+        rejectUnauthorized: true
+      }
     });
     
     // 1. Clear out the old, broken data so we start fresh
