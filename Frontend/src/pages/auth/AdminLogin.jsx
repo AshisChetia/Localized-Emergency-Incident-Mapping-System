@@ -123,7 +123,7 @@ const AdminLogin = () => {
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="admin@local.com"
+                placeholder="Enter your email"
                 className={`w-full bg-white border rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-1 transition-all ${errors.email ? "border-red-400 focus:ring-red-400" : "border-[var(--c-borderLight)] focus:border-[var(--c-charcoal)] focus:ring-[var(--c-charcoal)]"}`}
               />
             </div>
