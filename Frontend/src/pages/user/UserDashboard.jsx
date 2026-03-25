@@ -11,7 +11,7 @@ import Loader from "../../components/Loader";
 import toast from "react-hot-toast";
 import {
   Plus, FileText, CheckCircle, AlertCircle, Search, 
-  Activity, X, Trash2, MapPin, Clock,
+  Activity, X, Trash2, MapPin, Clock, Building2,
   LayoutGrid, Map as MapIcon, Navigation
 } from "lucide-react";
 import { colors, fonts } from "../../styles/designTokens";

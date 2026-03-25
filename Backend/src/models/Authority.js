@@ -222,6 +222,44 @@ const Authority = {
     );
     return rows;
   },
+
+  // ═══════════════════════════════════════
+  //  FIND BY PINCODE + DEPARTMENT
+  //  Checks if an authority (approved or
+  //  pending) already exists for this
+  //  pincode+department combination.
+  //  Used to enforce max 1 authority per
+  //  department per pincode zone.
+  // ═══════════════════════════════════════
+  findByPincodeAndDepartment: async (pincode, department) => {
+    const [rows] = await db.query(
+      `SELECT id, name, email, is_approved
+       FROM authorities
+       WHERE pincode = ?
+         AND department = ?`,
+      [pincode, department]
+    );
+    return rows[0] || null;
+  },
+
+  // ═══════════════════════════════════════
+  //  GET APPROVED DEPARTMENTS BY PINCODE
+  //  Returns list of department names that
+  //  have an approved authority for a given
+  //  pincode. Used by report form to show
+  //  citizens which departments are active.
+  // ═══════════════════════════════════════
+  findApprovedDepartmentsByPincode: async (pincode) => {
+    const [rows] = await db.query(
+      `SELECT DISTINCT department
+       FROM authorities
+       WHERE pincode = ?
+         AND is_approved = true
+       ORDER BY department ASC`,
+      [pincode]
+    );
+    return rows.map((row) => row.department);
+  },
 };
 
 export default Authority;

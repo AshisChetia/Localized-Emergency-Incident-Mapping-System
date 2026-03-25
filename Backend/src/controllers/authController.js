@@ -125,6 +125,13 @@ export const registerAuthority = async (req, res) => {
       });
     }
 
+    const deptExists = await Authority.findByPincodeAndDepartment(pincode, department);
+    if (deptExists) {
+      return res.status(409).json({
+        message: `An authority for ${department} already exists in pincode ${pincode}. Only one authority per department per pincode is allowed.`,
+      });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await Authority.create({
@@ -271,5 +278,29 @@ export const getMe = async (req, res) => {
   } catch (error) {
     console.error("GetMe Error:", error);
     return res.status(500).json({ message: "Server error fetching profile" });
+  }
+};
+
+// ═════════════════════════════════════════
+//  GET DEPARTMENTS BY PINCODE (PUBLIC)
+// ═════════════════════════════════════════
+
+export const getDepartmentsByPincode = async (req, res) => {
+  const { pincode } = req.params;
+
+  try {
+    if (!pincode) {
+      return res.status(400).json({ message: "Pincode is required" });
+    }
+
+    const departments = await Authority.findApprovedDepartmentsByPincode(pincode);
+    
+    return res.status(200).json({
+      pincode,
+      departments,
+    });
+  } catch (error) {
+    console.error("Get Departments Error:", error);
+    return res.status(500).json({ message: "Server error fetching departments" });
   }
 };

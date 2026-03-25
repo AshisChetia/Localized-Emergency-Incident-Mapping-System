@@ -8,9 +8,10 @@ import {
   loginAuthority,
   loginAdmin,
   getMe,
+  getDepartmentsByPincode,
 } from "../controllers/authController.js";
 
-import  authMiddleware  from "../middleware/authMiddleware.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 
 // Normal User Routes
 router.post("/register", registerUser);
@@ -25,5 +26,8 @@ router.post("/admin/login", loginAdmin);
 
 // Shared Profile Route (all roles)
 router.get("/me", authMiddleware, getMe);
+
+// Public Department Lookup
+router.get("/departments/:pincode", getDepartmentsByPincode);
 
 export default router;

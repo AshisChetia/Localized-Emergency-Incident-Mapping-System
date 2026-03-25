@@ -2,7 +2,7 @@
 // components/ReportCard.jsx
 // ─────────────────────────────────────────
 
-import { MapPin, Clock, CheckCircle, AlertCircle, User } from "lucide-react";
+import { MapPin, Clock, CheckCircle, AlertCircle, User, Building2 } from "lucide-react";
 import { colors, fonts } from "../styles/designTokens";
 
 const ReportCard = ({ report, mode = "user", onClick }) => {
@@ -65,10 +65,17 @@ const ReportCard = ({ report, mode = "user", onClick }) => {
       <div className="p-6 flex flex-col flex-grow bg-white">
         
         <div className="flex items-center justify-between mb-4">
-          <span className="flex items-center gap-1.5 text-xs font-bold text-[var(--c-charcoal)] bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] px-3 py-1.5 rounded-lg">
-            <MapPin className="w-3.5 h-3.5 text-[var(--c-olive)]" /> {report.pincode}
-          </span>
-          <span className="flex items-center gap-1.5 text-xs text-[var(--c-textSecondary)] font-medium">
+          <div className="flex flex-col gap-2">
+            <span className="flex items-center gap-1.5 w-max text-xs font-bold text-[var(--c-charcoal)] bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] px-3 py-1.5 rounded-lg">
+              <MapPin className="w-3.5 h-3.5 text-[var(--c-olive)]" /> {report.pincode}
+            </span>
+            {report.department && (
+              <span className="flex items-center gap-1.5 w-max text-[11px] font-bold text-[var(--c-oliveDark)] bg-[var(--c-sage)]/50 border border-[var(--c-olive)]/20 px-3 py-1.5 rounded-lg">
+                <Building2 className="w-3.5 h-3.5" /> {report.department}
+              </span>
+            )}
+          </div>
+          <span className="flex items-center self-start gap-1.5 text-xs text-[var(--c-textSecondary)] font-medium">
             <Clock className="w-3.5 h-3.5 opacity-70" /> {formatDate(report.created_at)}
           </span>
         </div>

@@ -20,12 +20,13 @@ const Report = {
     latitude,
     longitude,
     pincode,
+    department,
   }) => {
     const [result] = await db.query(
       `INSERT INTO reports
-        (user_id, description, image_url, latitude, longitude, pincode, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [userId, description, imageUrl, latitude, longitude, pincode, "pending"]
+        (user_id, description, image_url, latitude, longitude, pincode, department, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [userId, description, imageUrl, latitude, longitude, pincode, department, "pending"]
     );
     return result;
   },
@@ -45,6 +46,7 @@ const Report = {
           r.latitude,
           r.longitude,
           r.pincode,
+          r.department,
           r.status,
           r.created_at,
           u.name  AS reporter_name,
@@ -71,6 +73,7 @@ const Report = {
           latitude,
           longitude,
           pincode,
+          department,
           status,
           created_at
        FROM reports
@@ -84,12 +87,12 @@ const Report = {
   // ═══════════════════════════════════════
   //  FIND ALL REPORTS BY PINCODE
   //  Used by authority dashboard
+  //  Supports optional department filter
   //  Pending reports appear first then
   //  resolved sorted by newest
   // ═══════════════════════════════════════
-  findByPincode: async (pincode) => {
-    const [rows] = await db.query(
-      `SELECT
+  findByPincode: async (pincode, department = null) => {
+    let query = `SELECT
           r.id,
           r.user_id,
           r.description,
@@ -97,18 +100,26 @@ const Report = {
           r.latitude,
           r.longitude,
           r.pincode,
+          r.department,
           r.status,
           r.created_at,
           u.name  AS reporter_name,
           u.email AS reporter_email
        FROM reports r
        JOIN users u ON r.user_id = u.id
-       WHERE r.pincode = ?
-       ORDER BY
+       WHERE r.pincode = ?`;
+    const params = [pincode];
+
+    if (department) {
+      query += ` AND (r.department = ? OR r.department IS NULL)`;
+      params.push(department);
+    }
+
+    query += ` ORDER BY
           CASE WHEN r.status = 'pending' THEN 0 ELSE 1 END,
-          r.created_at DESC`,
-      [pincode]
-    );
+          r.created_at DESC`;
+
+    const [rows] = await db.query(query, params);
     return rows;
   },
 
@@ -127,6 +138,7 @@ const Report = {
           r.latitude,
           r.longitude,
           r.pincode,
+          r.department,
           r.status,
           r.created_at,
           u.name  AS reporter_name,
@@ -172,18 +184,24 @@ const Report = {
   // ═══════════════════════════════════════
   //  GET OVERALL STATS BY PINCODE
   //  Returns total, pending, resolved
-  //  counts for authority dashboard
+  //  counts for authority dashboard.
+  //  Supports optional department filter.
   // ═══════════════════════════════════════
-  getStatsByPincode: async (pincode) => {
-    const [rows] = await db.query(
-      `SELECT
+  getStatsByPincode: async (pincode, department = null) => {
+    let query = `SELECT
           COUNT(*) AS total,
           SUM(CASE WHEN status = 'pending'  THEN 1 ELSE 0 END) AS pending,
           SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) AS resolved
        FROM reports
-       WHERE pincode = ?`,
-      [pincode]
-    );
+       WHERE pincode = ?`;
+    const params = [pincode];
+
+    if (department) {
+      query += ` AND (department = ? OR department IS NULL)`;
+      params.push(department);
+    }
+
+    const [rows] = await db.query(query, params);
     return rows[0];
   },
 
@@ -191,22 +209,29 @@ const Report = {
   //  GET MONTHLY STATS BY PINCODE
   //  Returns last 6 months breakdown
   //  Used for Chart.js graphs in
-  //  authority dashboard
+  //  authority dashboard.
+  //  Supports optional department filter.
   // ═══════════════════════════════════════
-  getMonthlyStatsByPincode: async (pincode) => {
-    const [rows] = await db.query(
-      `SELECT
+  getMonthlyStatsByPincode: async (pincode, department = null) => {
+    let query = `SELECT
           DATE_FORMAT(created_at, '%b %Y') AS month,
           COUNT(*) AS total,
           SUM(CASE WHEN status = 'pending'  THEN 1 ELSE 0 END) AS pending,
           SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) AS resolved
        FROM reports
        WHERE pincode = ?
-         AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
-       GROUP BY DATE_FORMAT(created_at, '%Y-%m')
-       ORDER BY MIN(created_at) ASC`,
-      [pincode]
-    );
+         AND created_at >= DATE_SUB(NOW(), INTERVAL 6 MONTH)`;
+    const params = [pincode];
+
+    if (department) {
+      query += ` AND (department = ? OR department IS NULL)`;
+      params.push(department);
+    }
+
+    query += ` GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+       ORDER BY MIN(created_at) ASC`;
+
+    const [rows] = await db.query(query, params);
     return rows;
   },
 

@@ -209,6 +209,14 @@ const AuthorityDashboard = () => {
                   Zone: <span className="text-[var(--c-charcoal)]">{user?.pincode || "—"}</span>
                 </span>
               </div>
+              {user?.department && (
+                <div className="flex items-center gap-1.5 bg-white border border-[var(--c-borderLight)] rounded-full px-3 py-1.5 shadow-sm">
+                  <Building2 className="w-3.5 h-3.5 text-[var(--c-olive)]" />
+                  <span className="text-[var(--c-charcoal)] text-xs font-bold tracking-wider">
+                    {user?.department}
+                  </span>
+                </div>
+              )}
               <div className="flex items-center gap-1.5 bg-[var(--c-sage)]/50 border border-[var(--c-olive)]/20 rounded-full px-3 py-1.5 shadow-sm">
                 <span className="relative flex w-2 h-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--c-olive)] opacity-75" />

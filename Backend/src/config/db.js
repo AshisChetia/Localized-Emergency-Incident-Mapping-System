@@ -12,6 +12,9 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  // ── TIDB CLOUD CONNECTION FIXES ──
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
   // ── TIDB SECURE SSL FIX ──
   ssl: {
     minVersion: 'TLSv1.2',

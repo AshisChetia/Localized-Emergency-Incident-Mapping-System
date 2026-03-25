@@ -49,3 +49,11 @@ export const loginAdmin = (data) =>
 // GET /api/auth/me
 export const getMe = () =>
   api.get("/auth/me");
+
+// ═════════════════════════════════════════
+//  PUBLIC → GET DEPARTMENTS BY PINCODE
+// ═════════════════════════════════════════
+
+// GET /api/auth/departments/:pincode
+export const getDepartmentsByPincode = (pincode) =>
+  api.get(`/auth/departments/${pincode}`);

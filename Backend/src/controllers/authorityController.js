@@ -55,14 +55,14 @@ export const getAuthorityDashboard = async (req, res) => {
     try {
         // ── Run all queries in parallel ──────
         const [overallStats, monthlyStats, recentReports] = await Promise.all([
-            // Overall counts for this pincode
-            Report.getStatsByPincode(pincode),
+            // Overall counts for this pincode + department
+            Report.getStatsByPincode(pincode, department),
 
-            // Last 6 months data for Chart.js
-            Report.getMonthlyStatsByPincode(pincode),
+            // Last 6 months data for Chart.js (scoped to department)
+            Report.getMonthlyStatsByPincode(pincode, department),
 
-            // Most recent 5 pending reports
-            Report.findByPincode(pincode),
+            // Most recent pending reports (scoped to department)
+            Report.findByPincode(pincode, department),
         ]);
 
         // ── Filter only pending from recent ──

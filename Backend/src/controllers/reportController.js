@@ -20,8 +20,8 @@ const uploadToCloudinary = (fileBuffer, folderName) => {
 // ─────────────────────────────────────────
 
 const createReport = async (req, res) => {
-  // We ONLY accept visual coordinates and description from the frontend.
-  const { description, latitude, longitude } = req.body;
+  // We ONLY accept visual coordinates, description, and department from the frontend.
+  const { description, latitude, longitude, department } = req.body;
   const userId = req.user.id;
   
   // 👉 THE GUARANTEED ROUTING LOCK: 
@@ -29,8 +29,8 @@ const createReport = async (req, res) => {
   const routingPincode = req.user.pincode; 
 
   try {
-    if (!description || latitude === undefined || longitude === undefined) {
-      return res.status(400).json({ message: "Description and precise location are required" });
+    if (!description || !department || latitude === undefined || longitude === undefined) {
+      return res.status(400).json({ message: "Description, department, and precise location are required" });
     }
 
     if (!req.file) {
@@ -53,7 +53,8 @@ const createReport = async (req, res) => {
       imageUrl,
       latitude: parseFloat(latitude),   // Strict physical GPS point
       longitude: parseFloat(longitude), // Strict physical GPS point
-      pincode: routingPincode           // strict Database Routing Token
+      pincode: routingPincode,          // Strict Database Routing Token
+      department                        // Selected by citizen based on their pincode
     });
 
     const newReport = await Report.findById(result.insertId);
@@ -80,9 +81,10 @@ const getMyReports = async (req, res) => {
 
 const getReportsByPincode = async (req, res) => {
   const targetPincode = req.params.pincode || req.user.pincode;
+  const targetDepartment = req.user.role === "authority" ? req.user.department : null;
 
   try {
-    const reports = await Report.findByPincode(targetPincode);
+    const reports = await Report.findByPincode(targetPincode, targetDepartment);
     return res.status(200).json({ 
       pincode: targetPincode, 
       total: reports.length, 
@@ -104,8 +106,13 @@ const getReportById = async (req, res) => {
     if (role === "user" && report.user_id !== requesterId) {
       return res.status(403).json({ message: "You are not authorized to view this report" });
     }
-    if (role === "authority" && report.pincode !== authorityPincode) {
-      return res.status(403).json({ message: "This report does not belong to your jurisdiction" });
+    if (role === "authority") {
+      if (report.pincode !== authorityPincode) {
+        return res.status(403).json({ message: "This report does not belong to your jurisdiction" });
+      }
+      if (report.department && report.department !== req.user.department) {
+        return res.status(403).json({ message: "This report belongs to a different department" });
+      }
     }
     return res.status(200).json({ report });
   } catch (error) {
@@ -129,6 +136,10 @@ const updateReportStatus = async (req, res) => {
 
     if (report.pincode !== authorityPincode) {
       return res.status(403).json({ message: "You can only update reports within your jurisdiction" });
+    }
+    
+    if (report.department && report.department !== req.user.department) {
+      return res.status(403).json({ message: "You can only update reports assigned to your department" });
     }
 
     if (report.status === status) {
