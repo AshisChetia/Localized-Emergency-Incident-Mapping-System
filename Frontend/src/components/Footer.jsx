@@ -83,7 +83,7 @@ const Footer = () => {
                 </div>
                 support@emergencymap.com
               </a>
-              <a href="https://github.com/AshisChetia" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-[var(--c-textSecondary)] hover:text-[var(--c-olive)] text-sm font-medium transition-colors w-fit group">
+              <a href="https://github.com/AshisChetia/Localized-Emergency-Incident-Mapping-System" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-[var(--c-textSecondary)] hover:text-[var(--c-olive)] text-sm font-medium transition-colors w-fit group">
                  <div className="p-2 rounded-full bg-[var(--c-sage)]/50 group-hover:bg-[var(--c-sage)] transition-colors">
                    <Github className="w-4 h-4 text-[var(--c-oliveDark)]" strokeWidth={1.5} />
                 </div>
