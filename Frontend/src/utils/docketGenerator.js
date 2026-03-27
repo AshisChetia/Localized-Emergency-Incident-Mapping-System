@@ -3,7 +3,6 @@
 // Premium layout with exceptional spacing, alignment, and professional structure
 
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { parseUTCDate } from './dateTimeUtils';
 
 const colors = {
@@ -20,6 +19,17 @@ const colors = {
 };
 
 const fonts = { heading: 'helvetica', body: 'helvetica' };
+
+const formatSafeDate = (value) => {
+  if (!value) return 'N/A';
+  const parsed = parseUTCDate(value);
+  return Number.isNaN(parsed.getTime()) ? 'N/A' : parsed.toLocaleDateString('en-IN');
+};
+
+const formatSafeCoordinate = (value) => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric.toFixed(6) : 'N/A';
+};
 
 /**
  * Helper: Add colored section header
@@ -146,7 +156,7 @@ export const generateDocketPDF = async (report) => {
   
   addLabelValue(doc, 'Name', report.reporter_name || 'Anonymous', y + 3.5);
   addLabelValue(doc, 'Email', report.reporter_email || 'Not Provided', y + 7.5);
-  addLabelValue(doc, 'Report Date', parseUTCDate(report.created_at).toLocaleDateString('en-IN'), y + 11.5);
+  addLabelValue(doc, 'Report Date', formatSafeDate(report.created_at), y + 11.5);
   
   y += 21;
 
@@ -167,8 +177,8 @@ export const generateDocketPDF = async (report) => {
   doc.setTextColor(43, 40, 32);
   doc.setFont(fonts.heading, 'bold');
   doc.setFontSize(10);
-  doc.text(`${report.latitude?.toFixed(6) || 'N/A'}`, 55, y + 4);
-  doc.text(`${report.longitude?.toFixed(6) || 'N/A'}`, 55, y + 9);
+  doc.text(formatSafeCoordinate(report.latitude), 55, y + 4);
+  doc.text(formatSafeCoordinate(report.longitude), 55, y + 9);
   
   y += 19;
 
@@ -211,7 +221,7 @@ export const generateDocketPDF = async (report) => {
   doc.setFont(fonts.body, 'normal');
   doc.setFontSize(9);
   
-  const createdDate = parseUTCDate(report.created_at).toLocaleDateString('en-IN');
+  const createdDate = formatSafeDate(report.created_at);
   doc.text(`• Created on ${createdDate}`, 18, y + 4);
   doc.text(`  Status: ${report.status.toUpperCase()}`, 25, y + 8);
   
@@ -236,7 +246,18 @@ export const generateDocketPDF = async (report) => {
   doc.text(`Generated: ${new Date().toLocaleString('en-IN')} | Docket #${report.id}`, 105, pageHeight - 14, { align: 'center' });
 
   // Save PDF
-  doc.save(`LEIMS-Docket-${report.id}.pdf`);
+  const fileName = `LEIMS-Docket-${report.id}.pdf`;
+  try {
+    doc.save(fileName);
+  } catch (saveError) {
+    const blob = doc.output('blob');
+    const blobUrl = URL.createObjectURL(blob);
+    window.open(blobUrl, '_blank', 'noopener,noreferrer');
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+    throw new Error(
+      `Direct download not supported on this browser. Opened PDF preview instead. (${saveError?.message || 'Unknown save error'})`
+    );
+  }
 };
 
 // Batch export (future)

@@ -207,7 +207,8 @@ const ReportDetailCard = ({ report, mode = "user", onStatusUpdate, onBack }) => 
                     await generateDocketPDF(report);
                     toast.success('📄 Official PDF Docket Downloaded!');
                   } catch (e) {
-                    toast.error('PDF generation failed. Install jspdf?');
+                    const details = e?.message ? ` ${e.message}` : "";
+                    toast.error(`PDF export failed.${details}`);
                   } finally {
                     setExporting(false);
                   }
