@@ -112,7 +112,7 @@ const CommunityFeed = () => {
                   <div>
                     <span className="text-xs font-medium text-[var(--c-textSecondary)] uppercase tracking-widest block mb-1">Community Report</span>
                     <h2 className="text-[var(--c-charcoal)] font-bold text-2xl tracking-tight" style={{ fontFamily: fonts.heading }}>
-                      Case #{selectedReport.id.toString().padStart(4, "0")}
+                      Community Incident
                     </h2>
                   </div>
                   <button

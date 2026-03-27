@@ -10,7 +10,7 @@ import toast from "react-hot-toast";
 import { updateReportStatus } from "../services/reportService";
 import { colors, fonts } from "../styles/designTokens";
 import {
-  MapPin, User, Mail, Hash, ArrowLeft, CheckCircle,
+  MapPin, User, Phone, ArrowLeft, CheckCircle,
   RotateCcw, ExternalLink, ImageOff, Clock, FileText,
   AlertCircle, ShieldCheck, CalendarDays, Download, FileText as FileTextIcon, BadgeCheck
 } from "lucide-react";
@@ -74,7 +74,7 @@ const ReportDetailCard = ({ report, mode = "user", onStatusUpdate, onBack }) => 
                Incident Report
             </h3>
             <div className="flex items-center gap-1.5 text-[var(--c-textSecondary)] text-xs font-bold uppercase tracking-widest">
-              <Hash className="w-3 h-3" /> Docket {report.id}
+              Official Incident Record
             </div>
           </div>
         </div>
@@ -159,8 +159,8 @@ const ReportDetailCard = ({ report, mode = "user", onStatusUpdate, onBack }) => 
                       {report.reporter_name || "Unknown User"}
                     </p>
                     <div className="flex items-center gap-1.5 text-[var(--c-textSecondary)] text-xs mt-1">
-                      <Mail className="w-3.5 h-3.5" />
-                      <span className="truncate">{report.reporter_email || "Not Provided"}</span>
+                      <Phone className="w-3.5 h-3.5" />
+                      <span className="truncate">{report.reporter_number || "Not Provided"}</span>
                     </div>
                   </div>
                 </div>

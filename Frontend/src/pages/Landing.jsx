@@ -70,7 +70,7 @@ const Landing = () => {
     <div style={pageStyle} className="w-full bg-[var(--c-offWhite)] text-[var(--c-textPrimary)] antialiased selection:bg-[var(--c-olive)] selection:text-white overflow-hidden">
       
       {/* ── HERO SECTION ── */}
-      <section ref={heroRef} className="relative min-h-[95dvh] flex items-center justify-center pt-24 px-6 overflow-hidden">
+      <section id="hero" ref={heroRef} className="relative min-h-[95dvh] flex items-center justify-center pt-24 px-6 overflow-hidden scroll-mt-28">
         
         {/* Abstract Minimal Background Pattern instead of heavy Blobs */}
         <motion.div 
@@ -141,12 +141,13 @@ const Landing = () => {
       </div>
 
       {/* ── BENTO GRID FEATURES ── */}
-      <section id="features" className="py-32 bg-white px-6">
+      <section className="py-32 bg-white px-6">
         <div className="max-w-7xl mx-auto">
           <motion.div 
+            id="purpose"
             initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}
             variants={staggerContainer}
-            className="mb-20 max-w-2xl"
+            className="mb-20 max-w-2xl scroll-mt-28"
           >
             <motion.h2 variants={fadeUp} className="text-4xl md:text-5xl font-medium text-[var(--c-charcoal)] mb-6 tracking-tight" style={{ fontFamily: fonts.heading }}>
               Engineered for absolute municipal clarity.
@@ -157,7 +158,7 @@ const Landing = () => {
           </motion.div>
 
           {/* Grid Layout Container */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:auto-rows-[300px]">
+          <div id="how-it-works" className="grid grid-cols-1 md:grid-cols-3 gap-6 md:auto-rows-[300px] scroll-mt-28">
             
             {/* Bento Block 1 - Large Wide */}
             <motion.div 
@@ -220,7 +221,7 @@ const Landing = () => {
       </section>
 
       {/* ── USER MODULES (TABBED OR CLEAN LIST) ── */}
-      <section className="py-32 bg-[var(--c-offWhite)] px-6">
+      <section id="modules" className="py-32 bg-[var(--c-offWhite)] px-6 scroll-mt-28">
         <div className="max-w-7xl mx-auto">
           <motion.div 
             initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }}

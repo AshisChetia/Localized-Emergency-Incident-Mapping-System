@@ -135,6 +135,14 @@ const User = {
     );
     return rows.length > 0;
   },
+
+  numberExists: async (number) => {
+    const [rows] = await db.query(
+      `SELECT id FROM users WHERE number = ?`,
+      [number]
+    );
+    return rows.length > 0;
+  },
 };
 
 export default User;

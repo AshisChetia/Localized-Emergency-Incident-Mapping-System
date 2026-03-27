@@ -114,7 +114,6 @@ const Navbar = () => {
           {!user ? (
             <>
               <a href="/#hero" onClick={(e) => scrollToSection(e, "hero")} className="text-sm font-medium text-[var(--c-textSecondary)] hover:text-[var(--c-olive)] transition-colors">Home</a>
-              <a href="/#purpose" onClick={(e) => scrollToSection(e, "purpose")} className="text-sm font-medium text-[var(--c-textSecondary)] hover:text-[var(--c-olive)] transition-colors">Purpose</a>
               <a href="/#how-it-works" onClick={(e) => scrollToSection(e, "how-it-works")} className="text-sm font-medium text-[var(--c-textSecondary)] hover:text-[var(--c-olive)] transition-colors">How it Works</a>
               <a href="/#modules" onClick={(e) => scrollToSection(e, "modules")} className="text-sm font-medium text-[var(--c-textSecondary)] hover:text-[var(--c-olive)] transition-colors">Modules</a>
             </>
@@ -181,7 +180,6 @@ const Navbar = () => {
           {!user ? (
             <>
               <a href="/#hero" onClick={(e) => scrollToSection(e, "hero")} className="text-lg font-medium text-[var(--c-charcoal)]">Home</a>
-              <a href="/#purpose" onClick={(e) => scrollToSection(e, "purpose")} className="text-lg font-medium text-[var(--c-charcoal)]">Purpose</a>
               <a href="/#how-it-works" onClick={(e) => scrollToSection(e, "how-it-works")} className="text-lg font-medium text-[var(--c-charcoal)]">How it Works</a>
               <a href="/#modules" onClick={(e) => scrollToSection(e, "modules")} className="text-lg font-medium text-[var(--c-charcoal)]">Modules</a>
 

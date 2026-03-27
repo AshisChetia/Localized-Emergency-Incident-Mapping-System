@@ -61,7 +61,7 @@ const StatsChart = ({ reports = [], title = "Top Upvoted Reports", onSelectRepor
     );
   }
 
-  const labels = rankedReports.map((report) => `#${report.id} ${truncateLabel(report.description)}`);
+  const labels = rankedReports.map((report) => truncateLabel(report.description));
   const upvotes = rankedReports.map((report) => Number(report.verification_count || 0));
   const maxVotes = Math.max(...upvotes, 1);
 
@@ -117,7 +117,7 @@ const StatsChart = ({ reports = [], title = "Top Upvoted Reports", onSelectRepor
         callbacks: {
           title: (items) => {
             const report = rankedReports[items[0].dataIndex];
-            return `Report #${report.id}`;
+            return report ? truncateLabel(report.description, 48) : "Report";
           },
           label: (context) => {
             const report = rankedReports[context.dataIndex];
@@ -174,7 +174,7 @@ const StatsChart = ({ reports = [], title = "Top Upvoted Reports", onSelectRepor
           },
           callback: (_, index) => {
             const report = rankedReports[index];
-            return report ? `#${report.id}` : "";
+            return report ? `Issue ${index + 1}` : "";
           },
         },
       },

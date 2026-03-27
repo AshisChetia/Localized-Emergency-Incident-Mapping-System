@@ -7,7 +7,7 @@
 import db from "../config/db.js";
 
 const buildVerificationSelect = (viewerId = null, includeReporter = false) => `
-  ${includeReporter ? "u.name AS reporter_name, u.email AS reporter_email," : ""}
+  ${includeReporter ? "u.name AS reporter_name, u.number AS reporter_number," : ""}
   COALESCE(rv.verification_count, 0) AS verification_count,
   ${viewerId ? "CASE WHEN uv.id IS NULL THEN 0 ELSE 1 END" : "0"} AS is_verified_by_me
 `;

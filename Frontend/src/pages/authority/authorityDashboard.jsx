@@ -279,7 +279,7 @@ const AuthorityDashboard = () => {
                 onClick={() => setOverviewMode("chart")}
                 className={`flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-lg transition-all ${overviewMode === "chart" ? "bg-[var(--c-charcoal)] text-white" : "text-[var(--c-textSecondary)] hover:text-[var(--c-charcoal)] hover:bg-[var(--c-sage)]/30"}`}
               >
-                <BarChart2 className="w-4 h-4" /> <span className="hidden sm:inline">Analytics</span>
+                <BarChart2 className="w-4 h-4" /> <span className="hidden sm:inline">Upvote Chart</span>
               </button>
             </div>
 
@@ -339,7 +339,6 @@ const AuthorityDashboard = () => {
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${report.status === "pending" ? "bg-[#FFF8E6] text-[#d4af37]" : "bg-[#87a96b]/30 text-[#4b5320]"}`}>
                               {report.status}
                             </span>
-                            <span className="text-xs text-gray-500">Docket {report.id}</span>
                           </div>
                           <p className="text-sm font-bold text-[#333333] truncate mt-1">{report.description}</p>
                           <button

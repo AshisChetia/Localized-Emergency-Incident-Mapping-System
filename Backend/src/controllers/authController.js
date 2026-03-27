@@ -17,6 +17,10 @@ const generateToken = (id, role) => {
   return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: "72d" });
 };
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+const IN_MOBILE_REGEX = /^[6-9]\d{9}$/;
+const PINCODE_REGEX = /^\d{6}$/;
+
 // ═════════════════════════════════════════
 //  NORMAL USER AUTH
 // ═════════════════════════════════════════
@@ -26,23 +30,49 @@ export const registerUser = async (req, res) => {
   const { name, email, password, pincode, number } = req.body;
 
   try {
-    if (!name || !email || !password || !pincode || !number) {
+    const normalizedName = name?.trim();
+    const normalizedEmail = email?.trim().toLowerCase();
+    const normalizedPincode = String(pincode || "").trim();
+    const normalizedNumber = String(number || "").trim();
+
+    if (!normalizedName || !normalizedEmail || !password || !normalizedPincode || !normalizedNumber) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const userExists = await User.emailExists(email);
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      return res.status(400).json({ message: "Please enter a valid email address" });
+    }
+
+    if (!PINCODE_REGEX.test(normalizedPincode)) {
+      return res.status(400).json({ message: "Pincode must be exactly 6 digits" });
+    }
+
+    if (!IN_MOBILE_REGEX.test(normalizedNumber)) {
+      return res.status(400).json({ message: "Phone number must be a valid 10-digit Indian mobile number" });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long" });
+    }
+
+    const userExists = await User.emailExists(normalizedEmail);
     if (userExists) {
       return res.status(409).json({ message: "Email already registered" });
+    }
+
+    const numberExists = await User.numberExists(normalizedNumber);
+    if (numberExists) {
+      return res.status(409).json({ message: "Phone number already registered" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await User.create({
-      name,
-      email,
+      name: normalizedName,
+      email: normalizedEmail,
       password: hashedPassword,
-      pincode,
-      number,
+      pincode: normalizedPincode,
+      number: normalizedNumber,
     });
 
     const token = generateToken(result.insertId, "user");
@@ -52,10 +82,10 @@ export const registerUser = async (req, res) => {
       token,
       user: {
         id: result.insertId,
-        name,
-        email,
-        pincode,
-        number,
+        name: normalizedName,
+        email: normalizedEmail,
+        pincode: normalizedPincode,
+        number: normalizedNumber,
         role: "user",
       },
     });

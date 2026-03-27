@@ -21,6 +21,8 @@ const UserRegister = () => {
   const [errors, setErrors] = useState({});
   const [showPass, setShowPass] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+  const mobileRegex = /^[6-9]\d{9}$/;
 
   const authStyle = {
     "--c-offWhite": colors.offWhite,
@@ -46,10 +48,12 @@ const UserRegister = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Required";
     if (!formData.email.trim()) newErrors.email = "Required";
+    else if (!emailRegex.test(formData.email.trim())) newErrors.email = "Invalid email format";
     if (!formData.password) newErrors.password = "Required";
     if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Must match";
     if (formData.pincode.length !== 6) newErrors.pincode = "6 digits required";
     if (formData.number.length !== 10) newErrors.number = "10 digits required";
+    else if (!mobileRegex.test(formData.number)) newErrors.number = "Enter valid Indian mobile (starts 6-9)";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
