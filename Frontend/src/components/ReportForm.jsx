@@ -29,7 +29,6 @@ const isInsideIndia = (lat, lng) =>
   lng <= INDIA_BOUNDS.maxLng;
 
 const ReportForm = ({ onSuccess, onClose }) => {
-  const manualSubmitRef = useRef(false);
   const { user } = useAuth();
 
   const [description, setDescription] = useState("");
@@ -157,12 +156,7 @@ const ReportForm = ({ onSuccess, onClose }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!manualSubmitRef.current) return;
-    manualSubmitRef.current = false;
-
+  const handleSubmit = async () => {
     if (submitting) return;
 
     if (!validate()) {
@@ -234,7 +228,7 @@ const ReportForm = ({ onSuccess, onClose }) => {
           </div>
 
           <div className="overflow-y-auto p-6 flex flex-col gap-6 hide-scrollbar">
-            <form id="report-form" onSubmit={handleSubmit} className="flex flex-col gap-6">
+            <form id="report-form" onSubmit={(e) => e.preventDefault()} className="flex flex-col gap-6">
 
               {/* 🤖 AI Routing Badge */}
               <div className="bg-[var(--c-sage)]/30 border border-[var(--c-olive)]/20 rounded-xl p-4 flex items-start gap-3 mt-1 shadow-sm">
@@ -385,7 +379,7 @@ const ReportForm = ({ onSuccess, onClose }) => {
                 Cancel
               </button>
             )}
-            <button type="submit" form="report-form" onClick={() => { manualSubmitRef.current = true; }} disabled={submitting} className="flex-[2] bg-[var(--c-olive)] hover:bg-[var(--c-oliveDark)] text-white text-sm font-bold px-4 py-3.5 rounded-xl shadow-md transition-all transform hover:-translate-y-0.5">
+            <button type="button" onClick={handleSubmit} disabled={submitting} className="flex-[2] bg-[var(--c-olive)] hover:bg-[var(--c-oliveDark)] text-white text-sm font-bold px-4 py-3.5 rounded-xl shadow-md transition-all transform hover:-translate-y-0.5">
               {submitting ? <Loader variant="inline" text="Routing Report..." /> : <span className="flex items-center justify-center gap-2"><Upload className="w-4 h-4" /> Submit Report</span>}
             </button>
           </div>
