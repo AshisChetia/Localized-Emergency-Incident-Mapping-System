@@ -2,7 +2,7 @@
 // components/ReportDetailCard.jsx
 // ─────────────────────────────────────────
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import StatusBadge from "./StatusBadge";
 import Loader from "./Loader";
@@ -12,13 +12,16 @@ import { colors, fonts } from "../styles/designTokens";
 import {
   MapPin, User, Mail, Hash, ArrowLeft, CheckCircle,
   RotateCcw, ExternalLink, ImageOff, Clock, FileText,
-  AlertCircle, ShieldCheck, CalendarDays
+  AlertCircle, ShieldCheck, CalendarDays, Download, FileText as FileTextIcon, BadgeCheck
 } from "lucide-react";
+import { generateDocketPDF } from "../utils/docketGenerator";
+import { formatDate } from "../utils/dateTimeUtils";
 
 const ReportDetailCard = ({ report, mode = "user", onStatusUpdate, onBack }) => {
   const navigate = useNavigate();
   const [updating, setUpdating] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const detailStyle = {
     "--c-offWhite": colors.offWhite,
@@ -33,16 +36,6 @@ const ReportDetailCard = ({ report, mode = "user", onStatusUpdate, onBack }) => 
   };
 
   if (!report) return <Loader variant="section" text="Syncing report details..." />;
-
-  const formatDate = (dateStr) =>
-    new Date(dateStr).toLocaleDateString("en-IN", {
-      day: "2-digit", month: "long", year: "numeric",
-    });
-
-  const formatTime = (dateStr) =>
-    new Date(dateStr).toLocaleTimeString("en-IN", {
-      hour: "2-digit", minute: "2-digit", hour12: true,
-    });
 
   const openInMaps = () => {
     // FIXED: Removed the stray '0' and corrected the URL format
@@ -81,7 +74,7 @@ const ReportDetailCard = ({ report, mode = "user", onStatusUpdate, onBack }) => 
                Incident Report
             </h3>
             <div className="flex items-center gap-1.5 text-[var(--c-textSecondary)] text-xs font-bold uppercase tracking-widest">
-              <Hash className="w-3 h-3" /> #{report.id}
+              <Hash className="w-3 h-3" /> Docket {report.id}
             </div>
           </div>
         </div>
@@ -175,23 +168,66 @@ const ReportDetailCard = ({ report, mode = "user", onStatusUpdate, onBack }) => 
 
              <div className="bg-white border border-[var(--c-borderLight)] rounded-2xl p-6 shadow-sm">
                 <div className="flex items-center gap-2 text-xs text-[var(--c-textSecondary)] uppercase tracking-widest font-black mb-5">
-                  <Clock className="w-4 h-4 text-[var(--c-accentGold)]" /> System Timestamps
+                  <Clock className="w-4 h-4 text-[var(--c-accentGold)]" /> Report Logged
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                   <div className="flex flex-col gap-1">
-                      <span className="text-[var(--c-textSecondary)] text-[10px] font-bold uppercase">Date</span>
-                      <span className="text-[var(--c-charcoal)] text-sm font-bold flex items-center gap-1.5">
-                        <CalendarDays className="w-3.5 h-3.5" /> {formatDate(report.created_at)}
-                      </span>
-                   </div>
-                   <div className="flex flex-col gap-1">
-                      <span className="text-[var(--c-textSecondary)] text-[10px] font-bold uppercase">Exact Time</span>
-                      <span className="text-[var(--c-charcoal)] text-sm font-bold">{formatTime(report.created_at)}</span>
-                   </div>
+                <div className="flex flex-col gap-1">
+                   <span className="text-[var(--c-textSecondary)] text-[10px] font-bold uppercase">Date</span>
+                   <span className="text-[var(--c-charcoal)] text-sm font-bold flex items-center gap-1.5">
+                     <CalendarDays className="w-3.5 h-3.5" /> {formatDate(report.created_at)}
+                   </span>
                 </div>
+             </div>
+
+             <div className="bg-[#FFF8E6] border border-[#F2DCA2] rounded-2xl p-6 shadow-sm">
+                <div className="flex items-center gap-2 text-xs text-[#9a7a00] uppercase tracking-widest font-black mb-5">
+                  <BadgeCheck className="w-4 h-4 text-[var(--c-accentGold)]" /> Community Upvotes
+                </div>
+                <p className="text-[var(--c-charcoal)] text-2xl font-black">
+                  {report.verification_count || 0}
+                </p>
+                <p className="text-[var(--c-textSecondary)] text-xs font-bold uppercase tracking-wide mt-2">
+                  upvote{(report.verification_count || 0) === 1 ? "" : "s"} from local users
+                </p>
              </div>
           </div>
         </div>
+
+        {/* ── Authority/User Export Section ── */}
+        {(mode === "authority" || mode === "user") && (
+          <div className="mt-6 p-6 bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] rounded-3xl shadow-sm">
+            <div className="flex items-center gap-2 mb-4 text-xs font-bold uppercase tracking-wider text-[var(--c-oliveDark)]">
+              <FileTextIcon className="w-4 h-4" />
+              Official Docket Export
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                onClick={async () => {
+                  setExporting(true);
+                  try {
+                    await generateDocketPDF(report);
+                    toast.success('📄 Official PDF Docket Downloaded!');
+                  } catch (e) {
+                    toast.error('PDF generation failed. Install jspdf?');
+                  } finally {
+                    setExporting(false);
+                  }
+                }}
+                disabled={exporting}
+                className="flex-1 flex items-center justify-center gap-2 bg-[var(--c-olive)] hover:bg-[var(--c-oliveDark)] text-white font-bold py-3 px-6 rounded-xl shadow-lg transition-all hover:shadow-xl disabled:opacity-50"
+              >
+                {exporting ? <Loader variant="inline" size="sm" /> : (
+                  <>
+                    <Download className="w-4 h-4" />
+                    PDF Docket
+                  </>
+                )}
+              </button>
+            </div>
+            <p className="text-[10px] text-[var(--c-textSecondary)] mt-3 text-center font-medium uppercase tracking-wider">
+              Branded PDF for official records
+            </p>
+          </div>
+        )}
 
         {/* ── Authority Action Section ── */}
         {mode === "authority" && (
@@ -216,14 +252,14 @@ const ReportDetailCard = ({ report, mode = "user", onStatusUpdate, onBack }) => 
 
             <button
               onClick={handleStatusToggle}
-              disabled={updating}
+              disabled={updating || exporting}
               className={`min-w-[180px] flex items-center justify-center gap-2 text-sm font-black px-8 py-3.5 rounded-2xl transition-all shadow-md transform hover:-translate-y-1 ${
                 report.status === "pending"
                   ? "bg-[var(--c-olive)] text-white hover:bg-[var(--c-oliveDark)]"
                   : "bg-white border-2 border-[var(--c-accentGold)] text-[var(--c-accentGold)] hover:bg-[var(--c-accentGold)] hover:text-white"
               }`}
             >
-              {updating ? <Loader variant="inline" text="Syncing..." /> : report.status === "pending" ? <><CheckCircle className="w-4 h-4" /> Mark Resolved</> : <><RotateCcw className="w-4 h-4" /> Reopen Incident</>}
+              {updating ? <Loader variant="inline" size="sm" /> : report.status === "pending" ? <><CheckCircle className="w-4 h-4" /> Mark Resolved</> : <><RotateCcw className="w-4 h-4" /> Reopen Incident</>}
             </button>
           </div>
         )}

@@ -17,6 +17,7 @@ import AdminLogin from "./pages/auth/AdminLogin";
 import Landing from "./pages/Landing";
 import UserDashboard from "./pages/user/UserDashboard";
 import UserProfile from "./pages/user/UserProfile";
+import CommunityFeed from "./pages/user/CommunityFeed";
 import AuthorityDashboard from "./pages/authority/authorityDashboard";
 import AuthorityProfile from "./pages/authority/authorityProfile";
 import AdminDashboard from "./pages/admin/adminDashboard";
@@ -49,6 +50,10 @@ const App = () => {
           <Route
             path="/user/profile"
             element={ <ProtectedRoute allowedRole="user"><UserProfile /></ProtectedRoute> }
+          />
+          <Route
+            path="/user/community"
+            element={ <ProtectedRoute allowedRole="user"><CommunityFeed /></ProtectedRoute> }
           />
 
           <Route

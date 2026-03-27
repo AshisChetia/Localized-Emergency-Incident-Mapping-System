@@ -16,6 +16,7 @@ import AuthorityRequestCard from "../../components/AuthorityRequestCard";
 import Loader from "../../components/Loader";
 import toast from "react-hot-toast";
 import { colors, fonts } from "../../styles/designTokens";
+import { formatDateShort } from "../../utils/dateTimeUtils";
 import {
   Shield, Users, Building2, FileText, RefreshCw,
   Search, X, Inbox, CheckCircle, MapPin, Mail, Clock,
@@ -422,9 +423,7 @@ const AdminDashboard = () => {
 
                     <div className="col-span-1 sm:col-span-2 text-left sm:text-right text-[var(--c-textSecondary)] text-sm font-medium">
                       <span className="sm:hidden mr-2">Joined:</span>
-                      {new Date(auth.created_at || auth.updated_at).toLocaleDateString("en-IN", {
-                        month: 'short', day: 'numeric', year: 'numeric'
-                      })}
+                      {formatDateShort(auth.created_at || auth.updated_at)}
                     </div>
                   </div>
                 ))}

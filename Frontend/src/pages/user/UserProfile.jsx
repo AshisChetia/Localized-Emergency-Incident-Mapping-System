@@ -12,6 +12,7 @@ import {
   MapPin, Calendar, Save, X, Phone, ShieldCheck
 } from "lucide-react";
 import { colors, fonts } from "../../styles/designTokens";
+import { formatDateShort } from "../../utils/dateTimeUtils";
 
 const UserProfile = () => {
   const { user, refreshUser } = useAuth();
@@ -47,12 +48,7 @@ const UserProfile = () => {
     fontFamily: fonts.body,
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "—";
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      month: "short", year: "numeric", day: "numeric"
-    });
-  };
+
 
   // ── Profile Handlers ────────────────────
   const handleProfileChange = (e) => {
@@ -147,7 +143,7 @@ const UserProfile = () => {
                 <CheckCircle className="w-3.5 h-3.5" /> Citizen Account
               </span>
               <span className="flex items-center gap-1.5 px-3 py-1 bg-white border border-[var(--c-borderLight)] text-[var(--c-textSecondary)] text-xs font-bold rounded-full">
-                <Calendar className="w-3.5 h-3.5" /> Joined {formatDate(user?.created_at)}
+                <Calendar className="w-3.5 h-3.5" /> Joined {formatDateShort(user?.created_at)}
               </span>
             </div>
           </div>

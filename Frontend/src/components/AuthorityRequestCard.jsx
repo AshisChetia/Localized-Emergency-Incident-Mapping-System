@@ -5,6 +5,7 @@
 import { useState } from "react";
 import { ShieldAlert, Mail, MapPin, Clock, Check, X } from "lucide-react";
 import { colors, fonts } from "../styles/designTokens";
+import { formatDateShort } from "../utils/dateTimeUtils";
 import Loader from "./Loader";
 
 const AuthorityRequestCard = ({ request, onApprove, onReject }) => {
@@ -81,9 +82,7 @@ const AuthorityRequestCard = ({ request, onApprove, onReject }) => {
           <div className="min-w-0">
             <p className="text-[10px] font-bold text-[var(--c-textSecondary)] uppercase tracking-wider">Requested On</p>
             <p className="text-sm font-medium text-[var(--c-charcoal)] truncate">
-              {new Date(request.created_at).toLocaleDateString("en-IN", {
-                day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit"
-              })}
+              {formatDateShort(request.created_at)}
             </p>
           </div>
         </div>

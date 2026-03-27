@@ -4,16 +4,20 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { getMyReports, deleteReport } from "../../services/reportService";
+import {
+  getMyReports,
+  deleteReport,
+} from "../../services/reportService";
 import ReportCard from "../../components/ReportCard";
 import ReportForm from "../../components/ReportForm";
 import Loader from "../../components/Loader";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { colors, fonts } from "../../styles/designTokens";
+import { formatDateShort } from "../../utils/dateTimeUtils";
 import {
   Plus, FileText, CheckCircle, AlertCircle, Search, 
-  Activity, X, Trash2, MapPin, Clock, ArrowRight,
+  Activity, X, Trash2, MapPin, Clock,
   LayoutGrid, Map as MapIcon, ChevronRight, Building2
 } from "lucide-react";
 
@@ -46,7 +50,6 @@ const UserDashboard = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [selectedReport, setSelectedReport] = useState(null);
   const [deleting, setDeleting] = useState(false);
-
   const fetchReports = useCallback(async () => {
     try {
       setLoading(true);
@@ -108,16 +111,15 @@ const UserDashboard = () => {
     "--c-sage": colors.sage,
     "--c-accentGold": colors.accentGold,
     "--c-charcoal": colors.charcoal,
+    "--c-textPrimary": colors.textPrimary,
+    "--c-textSecondary": colors.textSecondary,
+    "--c-borderLight": colors.borderLight,
+    fontFamily: fonts.body,
   };
 
   return (
-    <div style={dashboardStyle} className="min-h-screen bg-[#F9FAFB] relative font-sans text-gray-900 selection:bg-[var(--c-sage)] selection:text-[var(--c-charcoal)]">
+    <div style={dashboardStyle} className="min-h-screen bg-[var(--c-offWhite)] relative selection:bg-[var(--c-sage)] selection:text-[var(--c-charcoal)]">
       
-      {/* ── PREMIUM DECORATIVE GLOW ── */}
-      <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-[#F3F4F6] to-transparent pointer-events-none z-0"></div>
-      <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[500px] bg-[var(--c-sage)] opacity-[0.15] blur-[120px] rounded-full pointer-events-none z-0"></div>
-      <div className="absolute top-[10%] right-[-5%] w-[40%] h-[400px] bg-amber-200 opacity-[0.1] blur-[100px] rounded-full pointer-events-none z-0"></div>
-
       {/* ── ALERTS / MODALS ── */}
       <AnimatePresence>
         {showForm && (
@@ -132,27 +134,27 @@ const UserDashboard = () => {
         {selectedReport && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-gray-900/40 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-[var(--c-charcoal)]/40 backdrop-blur-sm"
           >
             <motion.div 
               initial={{ opacity: 0, scale: 0.98, y: 20 }} 
               animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } }} 
               exit={{ opacity: 0, scale: 0.98, y: 20 }}
-              className="relative w-full max-w-4xl bg-white rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.1)] flex flex-col md:flex-row max-h-[95vh] md:max-h-[85vh] overflow-hidden border border-gray-100 ring-1 ring-black/5"
+              className="relative w-full max-w-4xl bg-white rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.1)] flex flex-col md:flex-row max-h-[95vh] md:max-h-[85vh] overflow-hidden border border-[var(--c-borderLight)]"
             >
               
               {/* Image Side */}
-              <div className="w-full md:w-5/12 bg-gray-50 border-b md:border-b-0 md:border-r border-gray-100 relative shrink-0 min-h-[250px] md:min-h-0">
+              <div className="w-full md:w-5/12 bg-[var(--c-sage)]/10 border-b md:border-b-0 md:border-r border-[var(--c-borderLight)] relative shrink-0 min-h-[250px] md:min-h-0">
                  {selectedReport.image_url ? (
                   <img src={selectedReport.image_url} alt="Incident Context" className="w-full h-full object-cover" />
                  ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 gap-4">
+                  <div className="w-full h-full flex flex-col items-center justify-center text-[var(--c-textSecondary)]/40 gap-4">
                     <AlertCircle className="w-12 h-12 stroke-[1.5]" />
                     <span className="text-xs font-semibold uppercase tracking-wider">No Documentation Attached</span>
                   </div>
                  )}
                  <div className="absolute top-5 left-5 z-10 flex gap-2">
-                    <span className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm border bg-white/95 backdrop-blur-sm ${selectedReport.status === 'resolved' ? 'text-[var(--c-olive)] border-green-200' : 'text-amber-600 border-amber-200'}`}>
+                    <span className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm border bg-white/95 backdrop-blur-sm ${selectedReport.status === 'resolved' ? 'text-[var(--c-oliveDark)] border-[var(--c-sage)]' : 'text-[var(--c-accentGold)] border-[#F2DCA2]'}`}>
                       {selectedReport.status}
                     </span>
                  </div>
@@ -160,16 +162,16 @@ const UserDashboard = () => {
 
               {/* Data Side */}
               <div className="w-full md:w-7/12 flex flex-col bg-white overflow-y-auto">
-                <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between shrink-0 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
+                <div className="px-8 py-6 border-b border-[var(--c-borderLight)] flex items-center justify-between shrink-0 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
                   <div>
-                    <span className="text-xs font-medium text-gray-500 uppercase tracking-widest block mb-1">Incident Profile</span>
+                    <span className="text-xs font-medium text-[var(--c-textSecondary)] uppercase tracking-widest block mb-1">Incident Profile</span>
                     <h2 className="text-[var(--c-charcoal)] font-bold text-2xl tracking-tight" style={{ fontFamily: fonts.heading }}>
                       Case #{selectedReport.id.toString().padStart(4, '0')}
                     </h2>
                   </div>
                   <button
                     onClick={() => setSelectedReport(null)}
-                    className="p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-colors border border-gray-200"
+                    className="p-2.5 rounded-xl bg-[var(--c-sage)]/20 text-[var(--c-textSecondary)] hover:text-[var(--c-charcoal)] hover:bg-[var(--c-sage)]/40 transition-colors border border-[var(--c-borderLight)]"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -177,58 +179,59 @@ const UserDashboard = () => {
 
                 <div className="p-8 flex flex-col gap-8 grow">
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1 bg-gray-50 rounded-2xl p-5 border border-gray-100 flex flex-col gap-1.5">
-                      <span className="text-[11px] uppercase text-gray-500 font-semibold tracking-wider">Date Logged</span>
-                      <span className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-gray-400" />
-                        {new Date(selectedReport.created_at).toLocaleDateString("en-IN", { day:'2-digit', month: 'short', year: 'numeric'})}
+                    <div className="flex-1 bg-[var(--c-sage)]/20 rounded-2xl p-5 border border-[var(--c-sage)]/40 flex flex-col gap-1.5">
+                      <span className="text-[11px] uppercase text-[var(--c-textSecondary)] font-semibold tracking-wider">Date Logged</span>
+                      <span className="text-sm font-semibold text-[var(--c-charcoal)] flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-[var(--c-textSecondary)]" />
+                        {formatDateShort(selectedReport.created_at)}
                       </span>
                     </div>
 
-                    <div className="flex-1 bg-gray-50 rounded-2xl p-5 border border-gray-100 flex flex-col gap-1.5">
-                      <span className="text-[11px] uppercase text-gray-500 font-semibold tracking-wider">Coordinates</span>
-                      <span className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-gray-400" />
+                    <div className="flex-1 bg-[var(--c-sage)]/20 rounded-2xl p-5 border border-[var(--c-sage)]/40 flex flex-col gap-1.5">
+                      <span className="text-[11px] uppercase text-[var(--c-textSecondary)] font-semibold tracking-wider">Coordinates</span>
+                      <span className="text-sm font-semibold text-[var(--c-charcoal)] flex items-center gap-2">
+                        <MapPin className="w-4 h-4 text-[var(--c-textSecondary)]" />
                         Zone: {selectedReport.pincode}
                       </span>
                     </div>
                   </div>
 
                   <div>
-                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Incident Transcript</h3>
-                    <p className="text-gray-700 text-[15px] leading-relaxed whitespace-pre-wrap font-medium">
+                    <h3 className="text-xs font-semibold text-[var(--c-textSecondary)] uppercase tracking-widest mb-3">Incident Transcript</h3>
+                    <p className="text-[var(--c-charcoal)] text-[15px] leading-relaxed whitespace-pre-wrap font-medium">
                       {selectedReport.description}
                     </p>
                   </div>
 
                   {selectedReport.department && (
-                     <div className="mt-auto bg-green-50/50 rounded-2xl p-5 border border-green-100 flex items-center gap-4">
-                       <div className="w-10 h-10 rounded-xl bg-white border border-green-200 flex items-center justify-center text-[var(--c-olive)] shadow-sm shrink-0">
+                     <div className="mt-auto bg-[var(--c-sage)]/30 rounded-2xl p-5 border border-[var(--c-olive)]/20 flex items-center gap-4">
+                       <div className="w-10 h-10 rounded-xl bg-white border border-[var(--c-sage)]/40 flex items-center justify-center text-[var(--c-olive)] shadow-sm shrink-0">
                          <Building2 className="w-5 h-5" />
                        </div>
                        <div>
                          <span className="text-[11px] uppercase text-[var(--c-olive)] font-semibold tracking-wider">Assigned Department</span>
-                         <p className="text-sm font-semibold text-green-900">{selectedReport.department}</p>
+                         <p className="text-sm font-semibold text-[var(--c-charcoal)]">{selectedReport.department}</p>
                        </div>
                      </div>
                   )}
+
                 </div>
 
-                <div className="p-6 border-t border-gray-100 shrink-0 flex items-center justify-between bg-gray-50">
+                <div className="p-6 border-t border-[var(--c-borderLight)] shrink-0 flex items-center justify-between bg-[var(--c-sage)]/10">
                   <button
                     onClick={() => handleDelete(selectedReport.id)}
                     disabled={deleting || selectedReport.status === "resolved"}
                     className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 ${
                       selectedReport.status === "resolved" 
-                        ? "text-gray-400 bg-gray-100 cursor-not-allowed" 
-                        : "text-red-600 bg-white hover:bg-red-50 border border-red-100 shadow-sm hover:shadow"
+                        ? "text-[var(--c-textSecondary)] bg-[var(--c-sage)]/20 cursor-not-allowed" 
+                        : "text-[#d32f2f] bg-white hover:bg-[#ffebee] border border-[#ffcdd2] shadow-sm hover:shadow"
                     }`}
                   >
                     {deleting ? <Loader variant="spinner" size="sm" /> : <><Trash2 className="w-4 h-4" /> Revoke</>}
                   </button>
                   <button
                     onClick={() => setSelectedReport(null)}
-                    className="bg-[var(--c-charcoal)] hover:bg-black text-white px-8 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                    className="bg-[var(--c-charcoal)] hover:bg-[var(--c-oliveDark)] text-white px-8 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2"
                   >
                     Close Profile <ChevronRight className="w-4 h-4" />
                   </button>
@@ -241,22 +244,30 @@ const UserDashboard = () => {
       </AnimatePresence>
 
       {/* ── SAAS GRADE DASHBOARD CONTENT ── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 lg:pt-20 pb-20 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10 pb-20 relative z-10">
         
         {/* Header Block */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
-          <div>
-            <h1 className="text-[40px] md:text-5xl font-extrabold tracking-tight text-gray-900 mb-2" style={{ fontFamily: fonts.heading }}>
-              Dashboard
-            </h1>
-            <p className="text-gray-500 text-base font-medium">
-              Welcome back, {user?.name?.split(' ')[0] || "Citizen"}. Here's an overview of your civic impact.
-            </p>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-8">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white border border-[var(--c-borderLight)] rounded-2xl flex items-center justify-center shadow-sm shrink-0">
+                <Activity className="w-7 h-7 text-[var(--c-accentGold)]" />
+              </div>
+              <div>
+                <h1 className="text-3xl md:text-4xl font-black text-[var(--c-charcoal)] tracking-tight mb-1" style={{ fontFamily: fonts.heading }}>
+                  Dashboard
+                </h1>
+                <p className="text-[var(--c-textSecondary)] text-sm font-medium">
+                  Welcome back, <span className="text-[var(--c-olive)] font-bold">{user?.name?.split(' ')[0] || "Citizen"}</span>
+                </p>
+              </div>
+            </div>
           </div>
           
           <button
             onClick={() => setShowForm(true)}
-            className="flex items-center justify-center gap-2 bg-[var(--c-oliveDark)] hover:bg-[var(--c-olive)] text-white px-6 py-3.5 rounded-xl font-semibold shadow-md shadow-gray-900/10 transition-all hover:-translate-y-0.5 w-full sm:w-auto text-[15px]"
+            className="flex items-center justify-center gap-2 bg-[var(--c-oliveDark)] hover:bg-[var(--c-olive)] active:bg-[var(--c-charcoal)] text-white px-6 py-3 rounded-2xl font-bold shadow-md transition-all hover:shadow-lg hover:-translate-y-0.5 w-full sm:w-auto text-sm"
+            style={{ fontFamily: fonts.heading }}
           >
             <Plus className="w-5 h-5" />
             New Report
@@ -264,43 +275,43 @@ const UserDashboard = () => {
         </div>
 
         {/* Premium Core Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-12">
-          <div className="bg-white rounded-[20px] p-6 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] relative overflow-hidden flex flex-col justify-between min-h-[160px]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+          <div className="bg-white rounded-3xl p-6 border border-[var(--c-borderLight)] shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[160px] hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-semibold text-gray-500">Total Volume</span>
-              <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center border border-gray-100">
-                <FileText className="w-5 h-5 text-gray-600" />
+              <span className="text-[var(--c-textSecondary)] text-sm font-semibold">Total Reports</span>
+              <div className="w-10 h-10 rounded-xl bg-[var(--c-sage)]/30 flex items-center justify-center border border-[var(--c-sage)]/40">
+                <FileText className="w-5 h-5 text-[var(--c-olive)]" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <p className="text-4xl font-bold text-gray-900 tracking-tight" style={{ fontFamily: fonts.heading }}>{totalReports}</p>
-              <span className="text-sm font-medium text-gray-400">files</span>
+              <p className="text-4xl font-bold text-[var(--c-charcoal)] tracking-tight" style={{ fontFamily: fonts.heading }}>{totalReports}</p>
+              <span className="text-sm font-medium text-[var(--c-textSecondary)]">submitted</span>
             </div>
           </div>
 
-          <div className="bg-white rounded-[20px] p-6 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] relative overflow-hidden flex flex-col justify-between min-h-[160px]">
+          <div className="bg-white rounded-3xl p-6 border border-[var(--c-borderLight)] shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[160px] hover:shadow-md transition-shadow">
              <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-semibold text-gray-500">Pending Actions</span>
-              <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center border border-amber-100">
-                <AlertCircle className="w-5 h-5 text-amber-600" />
+              <span className="text-[var(--c-textSecondary)] text-sm font-semibold">Pending Actions</span>
+              <div className="w-10 h-10 rounded-xl bg-[#FFF8E6] flex items-center justify-center border border-[#F2DCA2]">
+                <AlertCircle className="w-5 h-5 text-[var(--c-accentGold)]" />
               </div>
             </div>
             <div className="flex items-baseline gap-2">
-              <p className="text-4xl font-bold text-gray-900 tracking-tight" style={{ fontFamily: fonts.heading }}>{pendingCount}</p>
-              <span className="text-sm font-medium text-gray-400">unresolved</span>
+              <p className="text-4xl font-bold text-[var(--c-charcoal)] tracking-tight" style={{ fontFamily: fonts.heading }}>{pendingCount}</p>
+              <span className="text-sm font-medium text-[var(--c-textSecondary)]">awaiting</span>
             </div>
           </div>
 
-          <div className="bg-white rounded-[20px] p-6 border border-gray-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)] relative overflow-hidden flex flex-col justify-between min-h-[160px]">
+          <div className="bg-white rounded-3xl p-6 border border-[var(--c-borderLight)] shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[160px] hover:shadow-md transition-shadow">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-semibold text-gray-500">Completed Operations</span>
-              <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center border border-green-100">
-                <CheckCircle className="w-5 h-5 text-[var(--c-olive)]" />
+              <span className="text-[var(--c-textSecondary)] text-sm font-semibold">Resolved</span>
+              <div className="w-10 h-10 rounded-xl bg-[var(--c-sage)]/50 flex items-center justify-center border border-[var(--c-olive)]/20">
+                <CheckCircle className="w-5 h-5 text-[var(--c-oliveDark)]" />
               </div>
             </div>
              <div className="flex items-baseline gap-2">
-              <p className="text-4xl font-bold text-gray-900 tracking-tight" style={{ fontFamily: fonts.heading }}>{resolvedCount}</p>
-              <span className="text-sm font-medium text-gray-400">resolved</span>
+              <p className="text-4xl font-bold text-[var(--c-charcoal)] tracking-tight" style={{ fontFamily: fonts.heading }}>{resolvedCount}</p>
+              <span className="text-sm font-medium text-[var(--c-textSecondary)]">completed</span>
             </div>
           </div>
         </div>
@@ -309,15 +320,15 @@ const UserDashboard = () => {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
           
           {/* Segmented Controls */}
-          <div className="inline-flex p-1 bg-gray-100/80 rounded-xl border border-gray-200/60 overflow-x-auto hide-scrollbar w-full lg:w-auto">
+          <div className="inline-flex p-1 bg-white border border-[var(--c-borderLight)] rounded-2xl overflow-x-auto hide-scrollbar w-full lg:w-auto shadow-sm">
             {TABS.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex-1 lg:flex-none whitespace-nowrap px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
+                className={`flex-1 lg:flex-none whitespace-nowrap px-6 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                   activeTab === tab.key
-                    ? "bg-white text-gray-900 shadow-sm border border-gray-200/50"
-                    : "text-gray-500 hover:text-gray-900 hover:bg-gray-50/50"
+                    ? "bg-[var(--c-charcoal)] text-white shadow-sm"
+                    : "text-[var(--c-textSecondary)] hover:text-[var(--c-charcoal)] hover:bg-[var(--c-sage)]/20"
                 }`}
               >
                 {tab.label}
@@ -328,19 +339,19 @@ const UserDashboard = () => {
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
             
             {/* View Segmented Toggle */}
-            <div className="flex items-center p-1 bg-gray-100/80 border border-gray-200/60 rounded-xl shrink-0">
+            <div className="flex items-center p-1 bg-white border border-[var(--c-borderLight)] rounded-2xl shrink-0 shadow-sm">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold transition-all ${
-                  viewMode === "grid" ? "bg-white text-gray-900 shadow-sm border border-gray-200/50" : "text-gray-500 hover:text-gray-900"
+                className={`flex-1 sm:flex-none px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold transition-all ${
+                  viewMode === "grid" ? "bg-[var(--c-sage)]/50 text-[var(--c-olive)] shadow-sm" : "text-[var(--c-textSecondary)] hover:text-[var(--c-charcoal)]"
                 }`}
               >
                 <LayoutGrid className="w-4 h-4" /> <span className="hidden sm:inline">Grid</span>
               </button>
               <button
                 onClick={() => setViewMode("map")}
-                className={`flex-1 sm:flex-none px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold transition-all ${
-                  viewMode === "map" ? "bg-white text-gray-900 shadow-sm border border-gray-200/50" : "text-gray-500 hover:text-gray-900"
+                className={`flex-1 sm:flex-none px-4 py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm font-semibold transition-all ${
+                  viewMode === "map" ? "bg-[var(--c-sage)]/50 text-[var(--c-olive)] shadow-sm" : "text-[var(--c-textSecondary)] hover:text-[var(--c-charcoal)]"
                 }`}
               >
                 <MapIcon className="w-4 h-4" /> <span className="hidden sm:inline">Map</span>
@@ -349,13 +360,13 @@ const UserDashboard = () => {
 
             {/* Premium Search input */}
             <div className="relative w-full lg:w-72 shrink-0 group">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 group-focus-within:text-gray-600 transition-colors" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--c-textSecondary)] group-focus-within:text-[var(--c-olive)] transition-colors" />
               <input
                 type="text"
-                placeholder="Search case IDs, locations..."
+                placeholder="Search reports, zones..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/5 focus:border-gray-300 shadow-sm transition-all font-medium text-gray-900 placeholder:text-gray-400"
+                className="w-full bg-white border border-[var(--c-borderLight)] rounded-2xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--c-olive)]/20 focus:border-[var(--c-olive)] shadow-sm transition-all font-medium text-[var(--c-charcoal)] placeholder:text-[var(--c-textSecondary)]"
               />
             </div>
           </div>
@@ -364,21 +375,21 @@ const UserDashboard = () => {
         {/* Content Zone */}
         <div className="min-h-[400px]">
           {loading ? (
-            <div className="flex flex-col items-center justify-center h-[400px] text-gray-400 bg-white rounded-3xl border border-gray-100 shadow-sm">
+            <div className="flex flex-col items-center justify-center h-[400px] text-[var(--c-textSecondary)] bg-white rounded-3xl border border-[var(--c-borderLight)] shadow-sm">
               <Loader variant="spinner" size="xl" />
-              <p className="mt-6 text-sm font-medium tracking-wide">Syncing local documents...</p>
+              <p className="mt-6 text-sm font-medium tracking-wide">Syncing your reports...</p>
             </div>
           ) : error ? (
-            <div className="flex flex-col items-center justify-center h-[400px] text-center bg-red-50 rounded-3xl border border-red-100">
-              <AlertCircle className="w-12 h-12 text-red-500 mb-4 opacity-80" />
-              <p className="text-red-900 font-semibold mb-6">Database synchronization interrupted</p>
-              <button onClick={fetchReports} className="px-6 py-2.5 bg-white border border-red-200 text-red-700 rounded-lg text-sm font-bold shadow-sm hover:bg-red-50 transition-colors">
-                Retry Connection
+            <div className="flex flex-col items-center justify-center h-[400px] text-center bg-[#ffebee] rounded-3xl border border-[#ffcdd2] shadow-sm">
+              <AlertCircle className="w-12 h-12 text-[#d32f2f] mb-4 opacity-80" />
+              <p className="text-[#c62828] font-semibold mb-6">Failed to load reports</p>
+              <button onClick={fetchReports} className="px-6 py-2.5 bg-white border border-[#ffcdd2] text-[#d32f2f] rounded-xl text-sm font-bold shadow-sm hover:bg-[#ffebee] transition-colors">
+                Try Again
               </button>
             </div>
           ) : viewMode === "map" ? (
-            // ── PREMIUM MAP VIEW ──
-            <div className="w-full h-[650px] bg-white rounded-3xl p-2 shadow-sm border border-gray-100 ring-1 ring-black/5">
+            // ── MAP VIEW ──
+            <div className="w-full h-[650px] bg-white rounded-3xl p-2 shadow-sm border border-[var(--c-borderLight)]">
               <div className="w-full h-full rounded-[20px] overflow-hidden relative z-0">
                 <MapContainer 
                   key={filteredReports.length > 0 ? filteredReports[0].id : "empty-map"}
@@ -398,14 +409,14 @@ const UserDashboard = () => {
                         <Popup className="saas-popup">
                           <div className="min-w-[260px] font-sans flex flex-col pt-1">
                             {report.image_url && (
-                              <img src={report.image_url} alt="Env Data" className="w-full h-32 object-cover rounded-xl mb-4 border border-gray-100" />
+                              <img src={report.image_url} alt="Env Data" className="w-full h-32 object-cover rounded-xl mb-4 border border-[var(--c-borderLight)]" />
                             )}
                             <div className="px-1 flex flex-col">
-                              <span className={`self-start px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-md border mb-2 ${report.status==='resolved'?'bg-green-50 text-[var(--c-olive)] border-green-200':'bg-amber-50 text-amber-600 border-amber-200'}`}>
+                              <span className={`self-start px-2.5 py-1 text-[10px] font-bold tracking-wider uppercase rounded-md border mb-2 ${report.status==='resolved'?'bg-[var(--c-sage)] text-[var(--c-olive)] border-[var(--c-olive)]/30':'bg-[#FFF8E6] text-[var(--c-accentGold)] border-[#F2DCA2]'}`}>
                                 {report.status}
                               </span>
-                              <p className="text-[13px] font-semibold text-gray-900 leading-snug line-clamp-2 mt-1 mb-4">{report.description}</p>
-                              <button onClick={()=>setSelectedReport(report)} className="flex items-center justify-center gap-2 w-full py-2.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-xs font-bold text-gray-700 transition-colors">
+                              <p className="text-[13px] font-semibold text-[var(--c-charcoal)] leading-snug line-clamp-2 mt-1 mb-4">{report.description}</p>
+                              <button onClick={()=>setSelectedReport(report)} className="flex items-center justify-center gap-2 w-full py-2.5 bg-[var(--c-sage)]/20 hover:bg-[var(--c-sage)]/40 border border-[var(--c-sage)]/40 rounded-lg text-xs font-bold text-[var(--c-olive)] transition-colors">
                                 View Profile <ChevronRight className="w-3.5 h-3.5" />
                               </button>
                             </div>
@@ -419,21 +430,21 @@ const UserDashboard = () => {
             </div>
           ) : filteredReports.length === 0 ? (
             // ── GRID VIEW: EMPTY STATE ──
-            <div className="flex flex-col items-center justify-center text-center bg-white border border-gray-100 rounded-3xl shadow-sm py-24 px-6 relative overflow-hidden">
-               <div className="w-20 h-20 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-center mb-6 shadow-sm rotate-3">
-                <Activity className="w-8 h-8 text-gray-400" />
+            <div className="flex flex-col items-center justify-center text-center bg-white border border-[var(--c-borderLight)] rounded-3xl shadow-sm py-24 px-6 relative overflow-hidden">
+               <div className="w-20 h-20 bg-[var(--c-sage)]/20 rounded-2xl border border-[var(--c-sage)]/40 flex items-center justify-center mb-6 shadow-sm rotate-3">
+                <Activity className="w-8 h-8 text-[var(--c-olive)]" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3 tracking-tight">
+              <h3 className="text-2xl font-bold text-[var(--c-charcoal)] mb-3 tracking-tight" style={{ fontFamily: fonts.heading }}>
                 {searchQuery ? "No matches found" : activeTab !== "all" ? `No ${activeTab} operations` : "Your dashboard is empty"}
               </h3>
-              <p className="text-gray-500 text-[15px] max-w-md mb-8">
-                {searchQuery ? "We couldn't locate any records answering your criteria. Please alter the queries and try again." : "Start documenting issues across your community to establish an active civic footprint."}
+              <p className="text-[var(--c-textSecondary)] text-[15px] max-w-md mb-8">
+                {searchQuery ? "We couldn't locate any records matching your search. Try different keywords." : "Start by submitting your first emergency report to help your community."}
               </p>
               
               {!searchQuery && activeTab === "all" && (
                 <button
                   onClick={() => setShowForm(true)}
-                  className="bg-gray-900 text-white hover:bg-black px-6 py-3 rounded-xl text-sm font-semibold transition-all shadow-md shadow-gray-900/10 active:scale-95"
+                  className="bg-[var(--c-charcoal)] text-white hover:bg-[var(--c-oliveDark)] px-6 py-3 rounded-2xl text-sm font-bold transition-all shadow-md hover:shadow-lg active:scale-95"
                 >
                   Create your first report
                 </button>
@@ -453,6 +464,7 @@ const UserDashboard = () => {
             </div>
           )}
         </div>
+
       </div>
       
       {/* Utility styles for premium map look */}
@@ -460,13 +472,13 @@ const UserDashboard = () => {
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        .saas-popup .leaflet-popup-content-wrapper { border-radius: 1.25rem; padding: 12px; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.05); }
+        .saas-popup .leaflet-popup-content-wrapper { border-radius: 1.25rem; padding: 12px; box-shadow: 0 10px 40px -10px rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.05); background: white; }
         .saas-popup .leaflet-popup-content { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif !important; }
         .saas-popup .leaflet-popup-tip { box-shadow: 0 10px 40px -10px rgba(0,0,0,0.15); }
         
         .leaflet-bar { border: 1px solid rgba(0,0,0,0.1) !important; box-shadow: 0 4px 12px rgba(0,0,0,0.05) !important; border-radius: 0.75rem !important; overflow: hidden; }
-        .leaflet-bar a { background-color: #fff !important; color: #111827 !important; border-bottom: 1px solid rgba(0,0,0,0.05) !important; padding: 6px !important; transition: all 0.2s; }
-        .leaflet-bar a:hover { background-color: #f9fafb !important; color: #000 !important; }
+        .leaflet-bar a { background-color: #fff !important; color: #2E2A1F !important; border-bottom: 1px solid rgba(0,0,0,0.05) !important; padding: 6px !important; transition: all 0.2s; }
+        .leaflet-bar a:hover { background-color: #F8F5EC !important; color: #000 !important; }
       `}} />
     </div>
   );

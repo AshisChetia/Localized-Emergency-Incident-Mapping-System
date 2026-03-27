@@ -13,6 +13,10 @@ export const createReport = (formData) =>
 export const getMyReports = () =>
   api.get("/reports/my");
 
+// GET /api/reports/community -> citizen pincode feed
+export const getCommunityReports = () =>
+  api.get("/reports/community");
+
 // GET /api/reports/pincode/:pincode  → authority
 export const getReportsByPincode = (pincode) =>
   api.get(`/reports/pincode/${pincode}`);
@@ -32,3 +36,11 @@ export const getReportStats = () =>
 // DELETE /api/reports/:id → Delete report
 export const deleteReport = (id) =>
   api.delete(`/reports/${id}`);
+
+// POST /api/reports/:id/verify
+export const verifyReport = (id) =>
+  api.post(`/reports/${id}/verify`);
+
+// DELETE /api/reports/:id/verify
+export const unverifyReport = (id) =>
+  api.delete(`/reports/${id}/verify`);

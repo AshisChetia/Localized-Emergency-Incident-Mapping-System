@@ -2,11 +2,10 @@
 // pages/authority/AuthorityDashboard.jsx
 // ─────────────────────────────────────────
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "../../context/AuthContext";
 import {
   getReportsByPincode,
-  getReportStats,
   updateReportStatus,
 } from "../../services/reportService";
 import ReportCard from "../../components/ReportCard";
@@ -16,6 +15,7 @@ import Loader from "../../components/Loader";
 import StatusBadge from "../../components/StatusBadge";
 import toast from "react-hot-toast";
 import { colors, fonts } from "../../styles/designTokens";
+import { parseUTCDate, formatDate } from "../../utils/dateTimeUtils";
 import {
   ShieldCheck, FileText, Clock, CheckCircle, RefreshCw,
   Search, X, Inbox, BarChart2, MapPin, ChevronDown,
@@ -41,18 +41,42 @@ const TABS = [
 ];
 
 const SORT_OPTIONS = [
+  { key: "impact", label: "Most Upvoted" },
   { key: "newest", label: "Newest First" },
   { key: "oldest", label: "Oldest First" },
   { key: "status", label: "By Status" },
 ];
 
+const getReportTimestamp = (report) => {
+  if (!report?.created_at) {
+    return Number(report?.id || 0);
+  }
+
+  const directTime = Date.parse(report.created_at);
+  if (Number.isFinite(directTime)) {
+    return directTime;
+  }
+
+  const parsed = parseUTCDate(report.created_at);
+  const parsedTime = parsed instanceof Date ? parsed.getTime() : Number.NaN;
+  return Number.isFinite(parsedTime) ? parsedTime : Number(report?.id || 0);
+};
+
+const compareReportsByDate = (a, b, direction = "desc") => {
+  const timeDiff = getReportTimestamp(a) - getReportTimestamp(b);
+  if (timeDiff !== 0) {
+    return direction === "desc" ? -timeDiff : timeDiff;
+  }
+
+  const idDiff = Number(a?.id || 0) - Number(b?.id || 0);
+  return direction === "desc" ? -idDiff : idDiff;
+};
+
 const AuthorityDashboard = () => {
   const { user } = useAuth();
 
   const [reports, setReports] = useState([]);
-  const [monthlyStats, setMonthlyStats] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statsLoading, setStatsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const [activeTab, setActiveTab] = useState("all");
@@ -94,22 +118,9 @@ const AuthorityDashboard = () => {
     }
   }, [user?.pincode]);
 
-  const fetchStats = useCallback(async () => {
-    setStatsLoading(true);
-    try {
-      const res = await getReportStats();
-      setMonthlyStats(res.data.monthly || []);
-    } catch {
-      // silently fail chart
-    } finally {
-      setStatsLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     fetchReports();
-    fetchStats();
-  }, [fetchReports, fetchStats]);
+  }, [fetchReports]);
 
   const stats = {
     total: reports.length,
@@ -120,30 +131,59 @@ const AuthorityDashboard = () => {
       : 0,
   };
 
-  const filteredReports = reports
-    .filter((r) => activeTab === "all" || r.status === activeTab)
-    .filter((r) => {
-      if (!searchQuery.trim()) return true;
-      const q = searchQuery.toLowerCase();
+  const filteredReports = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    const scopedReports = reports.filter((report) => {
+      if (activeTab !== "all" && report.status !== activeTab) {
+        return false;
+      }
+
+      if (!query) {
+        return true;
+      }
+
       return (
-        r.description?.toLowerCase().includes(q) ||
-        r.pincode?.toString().includes(q) ||
-        r.reporter_name?.toLowerCase().includes(q)
+        report.description?.toLowerCase().includes(query) ||
+        report.pincode?.toString().includes(query) ||
+        report.reporter_name?.toLowerCase().includes(query)
       );
-    })
-    .sort((a, b) => {
-      if (sortKey === "newest") return new Date(b.created_at) - new Date(a.created_at);
-      if (sortKey === "oldest") return new Date(a.created_at) - new Date(b.created_at);
-      if (sortKey === "status") return a.status.localeCompare(b.status);
-      return 0;
     });
+
+    const sortedReports = [...scopedReports];
+
+    sortedReports.sort((a, b) => {
+      if (sortKey === "impact") {
+        const impactDiff = Number(b.verification_count || 0) - Number(a.verification_count || 0);
+        if (impactDiff !== 0) return impactDiff;
+        return compareReportsByDate(a, b, "desc");
+      }
+
+      if (sortKey === "newest") {
+        return compareReportsByDate(a, b, "desc");
+      }
+
+      if (sortKey === "oldest") {
+        return compareReportsByDate(a, b, "asc");
+      }
+
+      if (sortKey === "status") {
+        const statusDiff = a.status.localeCompare(b.status);
+        if (statusDiff !== 0) return statusDiff;
+        return compareReportsByDate(a, b, "desc");
+      }
+
+      return compareReportsByDate(a, b, "desc");
+    });
+
+    return sortedReports;
+  }, [reports, activeTab, searchQuery, sortKey]);
 
   const handleStatusUpdate = (reportId, newStatus) => {
     setReports((prev) => prev.map((r) => r.id === reportId ? { ...r, status: newStatus } : r));
     if (selectedReport?.id === reportId) {
       setSelectedReport((prev) => ({ ...prev, status: newStatus }));
     }
-    fetchStats();
   };
 
   const handleReportClick = (report) => {
@@ -155,30 +195,30 @@ const AuthorityDashboard = () => {
     {
       label: "Total Reports",
       value: stats.total,
-      icon: <FileText className="w-5 h-5 text-blue-600" />,
-      bg: "bg-blue-50 border-blue-100",
-      iconBg: "bg-blue-100",
+      icon: <FileText className="w-5 h-5 text-[var(--c-olive)]" />,
+      bg: "bg-[var(--c-sage)]/20 border-[var(--c-sage)]/40",
+      iconBg: "bg-[var(--c-sage)]/50",
     },
     {
       label: "Pending",
       value: stats.pending,
       icon: <Clock className="w-5 h-5 text-[var(--c-accentGold)]" />,
       bg: "bg-[#FFF8E6] border-[#F2DCA2]",
-      iconBg: "bg-amber-100",
+      iconBg: "bg-[#FFE8B6]",
     },
     {
       label: "Resolved",
       value: stats.resolved,
       icon: <CheckCircle className="w-5 h-5 text-[var(--c-oliveDark)]" />,
       bg: "bg-[var(--c-sage)]/30 border-[var(--c-olive)]/20",
-      iconBg: "bg-[var(--c-sage)]",
+      iconBg: "bg-[var(--c-sage)]/60",
     },
     {
       label: "Resolution Rate",
       value: `${stats.rate}%`,
       icon: <BarChart2 className="w-5 h-5 text-[var(--c-charcoal)]" />,
-      bg: "bg-gray-50 border-gray-200",
-      iconBg: "bg-gray-200",
+      bg: "bg-[var(--c-offWhite)] border-[var(--c-borderLight)]",
+      iconBg: "bg-[var(--c-sage)]/30",
     },
   ];
 
@@ -244,7 +284,7 @@ const AuthorityDashboard = () => {
             </div>
 
             <button
-              onClick={() => { fetchReports(true); fetchStats(); }}
+              onClick={() => { fetchReports(true); }}
               disabled={refreshing}
               className="flex items-center gap-2 bg-white border border-[var(--c-borderLight)] text-[var(--c-charcoal)] hover:bg-[var(--c-sage)]/30 px-4 py-2.5 rounded-full text-xs font-bold shadow-sm transition-all disabled:opacity-50"
             >
@@ -299,7 +339,7 @@ const AuthorityDashboard = () => {
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${report.status === "pending" ? "bg-[#FFF8E6] text-[#d4af37]" : "bg-[#87a96b]/30 text-[#4b5320]"}`}>
                               {report.status}
                             </span>
-                            <span className="text-xs text-gray-500">#{report.id}</span>
+                            <span className="text-xs text-gray-500">Docket {report.id}</span>
                           </div>
                           <p className="text-sm font-bold text-[#333333] truncate mt-1">{report.description}</p>
                           <button
@@ -317,7 +357,11 @@ const AuthorityDashboard = () => {
             </div>
           ) : (
             <div className="bg-white border border-[var(--c-borderLight)] rounded-3xl p-6 shadow-sm">
-              {statsLoading ? <Loader variant="section" text="Loading analytics..." /> : <StatsChart monthlyData={monthlyStats} title="Monthly Incident Overview" />}
+              <StatsChart
+                reports={reports}
+                title="Top Upvoted Reports"
+                onSelectReport={handleReportClick}
+              />
             </div>
           )}
         </div>
@@ -356,8 +400,8 @@ const AuthorityDashboard = () => {
                 />
               </div>
 
-              <div className="flex items-center gap-2 w-full lg:w-auto overflow-x-auto hide-scrollbar pb-2 -mx-4 px-4 lg:mx-0 lg:px-0 lg:pb-0">
-                <div className="relative shrink-0 z-20">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto">
+                <div className="relative shrink-0 z-30 self-start">
                   <button onClick={() => setShowSortMenu((p) => !p)} className="flex items-center gap-2 h-full bg-white border border-[var(--c-borderLight)] hover:bg-[var(--c-offWhite)] text-[var(--c-charcoal)] text-sm font-bold px-4 py-2.5 rounded-full transition-all shadow-sm">
                     <SlidersHorizontal className="w-4 h-4" />
                     <span className="hidden sm:inline">{SORT_OPTIONS.find((s) => s.key === sortKey)?.label}</span>
@@ -366,7 +410,7 @@ const AuthorityDashboard = () => {
                   {showSortMenu && (
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setShowSortMenu(false)} />
-                      <div className="absolute left-0 top-full mt-2 bg-white border border-[var(--c-borderLight)] rounded-2xl shadow-xl overflow-hidden w-48 py-2 z-20">
+                      <div className="absolute left-0 top-full mt-2 bg-white border border-[var(--c-borderLight)] rounded-2xl shadow-xl overflow-hidden w-48 py-2 z-30">
                         {SORT_OPTIONS.map((opt) => (
                           <button key={opt.key} onClick={() => { setSortKey(opt.key); setShowSortMenu(false); }} className={`w-full text-left px-5 py-3 text-sm transition-colors ${sortKey === opt.key ? "bg-[var(--c-sage)]/50 text-[var(--c-oliveDark)] font-bold" : "text-[var(--c-charcoal)] hover:bg-[var(--c-offWhite)] font-medium"}`}>
                             {opt.label}
@@ -377,9 +421,7 @@ const AuthorityDashboard = () => {
                   )}
                 </div>
 
-                <div className="w-px h-6 bg-[var(--c-borderLight)] shrink-0 hidden sm:block"></div>
-
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0">
                   {TABS.map((tab) => {
                     const count = tab.key === "all" ? stats.total : tab.key === "pending" ? stats.pending : stats.resolved;
                     return (
@@ -447,8 +489,6 @@ const AuthorityDashboard = () => {
 const ListReportRow = ({ report, onStatusUpdate, onClick }) => {
   const [updating, setUpdating] = useState(false);
 
-  const formatDate = (dateStr) => new Date(dateStr).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-
   const handleToggle = async (e) => {
     e.stopPropagation();
     const newStatus = report.status === "pending" ? "resolved" : "pending";
@@ -470,6 +510,9 @@ const ListReportRow = ({ report, onStatusUpdate, onClick }) => {
       <p className="flex-1 text-[var(--c-charcoal)] font-medium text-sm line-clamp-1 min-w-0">{report.description}</p>
       <div className="flex items-center gap-4 shrink-0 flex-wrap">
         {report.reporter_name && <span className="text-[var(--c-textSecondary)] text-xs font-bold uppercase tracking-wider hidden md:block">{report.reporter_name}</span>}
+        <span className="text-[var(--c-textSecondary)] text-xs font-bold uppercase tracking-wider hidden md:block">
+          {report.verification_count || 0} upvote{(report.verification_count || 0) === 1 ? "" : "s"}
+        </span>
         <span className="text-[var(--c-textSecondary)] font-medium text-xs hidden sm:block">{formatDate(report.created_at)}</span>
         <span className="bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] px-2.5 py-1 rounded-md text-[var(--c-charcoal)] text-xs font-bold tracking-widest hidden lg:block">{report.pincode}</span>
         <button onClick={handleToggle} disabled={updating} className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border transition-all disabled:opacity-50 shadow-sm transform hover:-translate-y-0.5 ${report.status === "pending" ? "bg-[var(--c-olive)] border-[var(--c-oliveDark)] text-white hover:bg-[var(--c-oliveDark)]" : "bg-[#FFF8E6] border-[#F2DCA2] text-[var(--c-accentGold)] hover:bg-[#F2DCA2]/30"}`}>

@@ -7,7 +7,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { colors, fonts } from "../styles/designTokens";
 import {
-  Menu, X, MapPin, LayoutDashboard, LogOut, LogIn, UserPlus
+  Menu, X, MapPin, LayoutDashboard, LogOut, BadgeCheck
 } from "lucide-react";
 
 const Navbar = () => {
@@ -119,9 +119,16 @@ const Navbar = () => {
               <a href="/#modules" onClick={(e) => scrollToSection(e, "modules")} className="text-sm font-medium text-[var(--c-textSecondary)] hover:text-[var(--c-olive)] transition-colors">Modules</a>
             </>
           ) : (
-            <Link to={getDashboardPath()} className="text-sm font-medium text-[var(--c-olive)] flex items-center gap-1.5">
-              <LayoutDashboard className="w-4 h-4" /> Dashboard
-            </Link>
+            <>
+              <Link to={getDashboardPath()} className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${location.pathname === getDashboardPath() ? "text-[var(--c-olive)]" : "text-[var(--c-textSecondary)] hover:text-[var(--c-olive)]"}`}>
+                <LayoutDashboard className="w-4 h-4" /> Dashboard
+              </Link>
+              {user.role === "user" && (
+                <Link to="/user/community" className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${location.pathname === "/user/community" ? "text-[var(--c-olive)]" : "text-[var(--c-textSecondary)] hover:text-[var(--c-olive)]"}`}>
+                  <BadgeCheck className="w-4 h-4" /> Community
+                </Link>
+              )}
+            </>
           )}
         </div>
 
@@ -199,6 +206,11 @@ const Navbar = () => {
               <Link to={getDashboardPath()} onClick={closeMenu} className="flex items-center gap-3 text-lg font-medium text-[var(--c-charcoal)] p-2 hover:bg-white rounded-xl transition-colors">
                 <LayoutDashboard className="w-5 h-5 text-[var(--c-olive)]" /> Dashboard
               </Link>
+              {user?.role === "user" && (
+                <Link to="/user/community" onClick={closeMenu} className="flex items-center gap-3 text-lg font-medium text-[var(--c-charcoal)] p-2 hover:bg-white rounded-xl transition-colors">
+                  <BadgeCheck className="w-5 h-5 text-[var(--c-accentGold)]" /> Community
+                </Link>
+              )}
 
               <div className="h-px bg-[var(--c-borderLight)] my-2"></div>
 

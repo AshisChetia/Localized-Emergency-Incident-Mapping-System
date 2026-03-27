@@ -1,225 +1,259 @@
-// ─────────────────────────────────────────
-// components/StatsChart.jsx
-// Displays monthly report stats as a
-// bar chart using Chart.js via
-// react-chartjs-2.
-// Shows total, pending, resolved counts
-// for the last 6 months.
-//
-// Used in:
-// - AuthorityDashboard.jsx
-// - AdminDashboard.jsx
-// ─────────────────────────────────────────
-
-import {
+﻿import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   BarElement,
-  LineElement,
-  PointElement,
   Title,
   Tooltip,
-  Legend,
-  Filler,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { BarChart2 } from "lucide-react";
+import { BarChart2, BadgeCheck, ArrowUpRight, MapPin } from "lucide-react";
+import { colors, fonts } from "../styles/designTokens";
 
-// ── Register Chart.js modules ───────────
 ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
-  LineElement,
-  PointElement,
   Title,
-  Tooltip,
-  Legend,
-  Filler
+  Tooltip
 );
 
-const StatsChart = ({ monthlyData = [], title = "Monthly Report Overview" }) => {
+const truncateLabel = (value, limit = 34) => {
+  if (!value) return "Untitled report";
+  return value.length > limit ? `${value.slice(0, Math.max(limit - 3, 1))}...` : value;
+};
 
-  // ── Empty state ─────────────────────────
-  if (!monthlyData || monthlyData.length === 0) {
+const StatsChart = ({ reports = [], title = "Top Upvoted Reports", onSelectReport }) => {
+  const rankedReports = [...reports]
+    .filter((report) => Number(report.verification_count || 0) > 0)
+    .sort((a, b) => {
+      const impactDiff = Number(b.verification_count || 0) - Number(a.verification_count || 0);
+      if (impactDiff !== 0) return impactDiff;
+      return new Date(b.created_at) - new Date(a.created_at);
+    })
+    .slice(0, 6);
+
+  if (rankedReports.length === 0) {
     return (
-      <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 flex flex-col gap-3">
-        <div className="flex items-center gap-2">
-          <BarChart2 className="w-5 h-5 text-blue-400" />
-          <h3 className="text-white font-semibold text-base">{title}</h3>
+      <div className="bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] rounded-[2rem] p-6 sm:p-7 flex flex-col gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-[#FFF8E6] border border-[#F2DCA2] flex items-center justify-center">
+            <BarChart2 className="w-5 h-5 text-[var(--c-accentGold)]" />
+          </div>
+          <div>
+            <h3 className="text-[var(--c-charcoal)] font-black text-lg" style={{ fontFamily: fonts.heading }}>
+              {title}
+            </h3>
+            <p className="text-[var(--c-textSecondary)] text-sm">
+              This panel will surface the highest-upvoted reports in your zone.
+            </p>
+          </div>
         </div>
-        <div className="flex flex-col items-center justify-center h-48 gap-3">
-          <BarChart2 className="w-10 h-10 text-gray-700" />
-          <p className="text-gray-500 text-sm">
-            No report data available yet
-          </p>
-          <p className="text-gray-700 text-xs">
-            Data will appear once reports are submitted
+
+        <div className="rounded-[1.5rem] border border-dashed border-[var(--c-borderLight)] bg-white min-h-[280px] flex flex-col items-center justify-center text-center px-6">
+          <BadgeCheck className="w-12 h-12 text-[var(--c-accentGold)]/40 mb-4" />
+          <p className="text-[var(--c-charcoal)] font-bold text-base">No upvoted reports yet</p>
+          <p className="text-[var(--c-textSecondary)] text-sm mt-2 max-w-md">
+            Once citizens start upvoting important issues, this board will automatically highlight the strongest community signals.
           </p>
         </div>
       </div>
     );
   }
 
-  // ── Extract labels and datasets ─────────
-  const labels   = monthlyData.map((d) => d.month);
-  const total    = monthlyData.map((d) => Number(d.total    || 0));
-  const pending  = monthlyData.map((d) => Number(d.pending  || 0));
-  const resolved = monthlyData.map((d) => Number(d.resolved || 0));
+  const labels = rankedReports.map((report) => `#${report.id} ${truncateLabel(report.description)}`);
+  const upvotes = rankedReports.map((report) => Number(report.verification_count || 0));
+  const maxVotes = Math.max(...upvotes, 1);
 
-  // ── Chart data config ───────────────────
   const data = {
     labels,
     datasets: [
       {
-        label:           "Total",
-        data:            total,
-        backgroundColor: "rgba(99, 102, 241, 0.7)",  // indigo
-        borderColor:     "rgba(99, 102, 241, 1)",
-        borderWidth:     1,
-        borderRadius:    6,
-        borderSkipped:   false,
-      },
-      {
-        label:           "Pending",
-        data:            pending,
-        backgroundColor: "rgba(234, 179, 8, 0.7)",   // yellow
-        borderColor:     "rgba(234, 179, 8, 1)",
-        borderWidth:     1,
-        borderRadius:    6,
-        borderSkipped:   false,
-      },
-      {
-        label:           "Resolved",
-        data:            resolved,
-        backgroundColor: "rgba(34, 197, 94, 0.7)",   // green
-        borderColor:     "rgba(34, 197, 94, 1)",
-        borderWidth:     1,
-        borderRadius:    6,
-        borderSkipped:   false,
+        data: upvotes,
+        backgroundColor: [
+          "rgba(92, 111, 74, 0.95)",
+          "rgba(161, 124, 65, 0.92)",
+          "rgba(63, 79, 49, 0.88)",
+          "rgba(217, 224, 201, 0.95)",
+          "rgba(92, 111, 74, 0.72)",
+          "rgba(161, 124, 65, 0.72)",
+        ],
+        borderRadius: 12,
+        borderSkipped: false,
+        barThickness: 24,
+        hoverBackgroundColor: [
+          "rgba(63, 79, 49, 1)",
+          "rgba(138, 105, 54, 1)",
+          "rgba(46, 42, 31, 1)",
+          "rgba(196, 207, 177, 1)",
+          "rgba(63, 79, 49, 0.86)",
+          "rgba(138, 105, 54, 0.86)",
+        ],
       },
     ],
   };
 
-  // ── Chart options ───────────────────────
   const options = {
-    responsive:          true,
-    maintainAspectRatio: true,
-    aspectRatio:         2,
-    interaction: {
-      mode:      "index",
-      intersect: false,
+    indexAxis: "y",
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: {
+      duration: 700,
+      easing: "easeOutQuart",
     },
     plugins: {
       legend: {
-        position: "top",
-        align:    "end",
-        labels: {
-          color:      "#9ca3af",
-          boxWidth:   12,
-          boxHeight:  12,
-          borderRadius: 4,
-          padding:    16,
-          font: {
-            size:   12,
-            family: "Inter, sans-serif",
-          },
-          usePointStyle: true,
-          pointStyle:    "rectRounded",
-        },
+        display: false,
       },
       tooltip: {
-        backgroundColor: "#111827",
-        borderColor:     "#374151",
-        borderWidth:     1,
-        titleColor:      "#f9fafb",
-        bodyColor:       "#9ca3af",
-        padding:         12,
-        cornerRadius:    10,
+        backgroundColor: colors.charcoal,
+        borderColor: colors.borderLight,
+        borderWidth: 1,
+        titleColor: colors.offWhite,
+        bodyColor: colors.sage,
+        cornerRadius: 14,
+        padding: 14,
+        displayColors: false,
         callbacks: {
-          label: (context) =>
-            `  ${context.dataset.label}: ${context.parsed.y}`,
+          title: (items) => {
+            const report = rankedReports[items[0].dataIndex];
+            return `Report #${report.id}`;
+          },
+          label: (context) => {
+            const report = rankedReports[context.dataIndex];
+            return `${report.verification_count} upvotes`;
+          },
+          afterLabel: (context) => {
+            const report = rankedReports[context.dataIndex];
+            return truncateLabel(report.description, 56);
+          },
         },
       },
     },
+    onClick: (_, elements) => {
+      if (!elements.length || typeof onSelectReport !== "function") return;
+      const index = elements[0].index;
+      onSelectReport(rankedReports[index]);
+    },
     scales: {
       x: {
+        beginAtZero: true,
+        suggestedMax: maxVotes + 1,
         grid: {
-          color:   "rgba(55, 65, 81, 0.5)",
+          color: "rgba(207, 197, 179, 0.45)",
+          drawBorder: false,
+        },
+        border: {
           display: false,
         },
         ticks: {
-          color: "#6b7280",
+          color: colors.textSecondary,
+          stepSize: 1,
           font: {
-            size:   11,
-            family: "Inter, sans-serif",
+            family: fonts.body,
+            size: 11,
+            weight: 600,
           },
-        },
-        border: {
-          color: "#374151",
+          callback: (value) => `${value}`,
         },
       },
       y: {
-        beginAtZero: true,
         grid: {
-          color:       "rgba(55, 65, 81, 0.5)",
-          borderDash:  [4, 4],
-        },
-        ticks: {
-          color: "#6b7280",
-          font: {
-            size:   11,
-            family: "Inter, sans-serif",
-          },
-          stepSize: 1,
-          callback: (value) =>
-            Number.isInteger(value) ? value : null,
+          display: false,
+          drawBorder: false,
         },
         border: {
-          color: "#374151",
-          dash:  [4, 4],
+          display: false,
+        },
+        ticks: {
+          color: colors.charcoal,
+          font: {
+            family: fonts.body,
+            size: 11,
+            weight: 700,
+          },
+          callback: (_, index) => {
+            const report = rankedReports[index];
+            return report ? `#${report.id}` : "";
+          },
         },
       },
     },
   };
 
-  return (
-    <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 flex flex-col gap-5">
+  const totalUpvotes = upvotes.reduce((sum, count) => sum + count, 0);
 
-      {/* ── Chart Header ─────────────────── */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-indigo-500/20 border border-indigo-500/30 rounded-lg flex items-center justify-center">
-            <BarChart2 className="w-4 h-4 text-indigo-400" />
+  return (
+    <div className="bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] rounded-[2rem] p-6 sm:p-7 flex flex-col gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-[#FFF8E6] border border-[#F2DCA2] flex items-center justify-center shrink-0">
+            <BarChart2 className="w-5 h-5 text-[var(--c-accentGold)]" />
           </div>
           <div>
-            <h3 className="text-white font-semibold text-base leading-tight">
+            <h3 className="text-[var(--c-charcoal)] font-black text-lg" style={{ fontFamily: fonts.heading }}>
               {title}
             </h3>
-            <p className="text-gray-500 text-xs mt-0.5">
-              Last {monthlyData.length} months
+            <p className="text-[var(--c-textSecondary)] text-sm mt-1">
+              Highest community-signal reports in your zone. Click any bar to open the full report.
             </p>
           </div>
         </div>
 
-        {/* Quick summary pills */}
-        <div className="hidden sm:flex items-center gap-2">
-          <span className="text-xs px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-medium">
-            {total.reduce((a, b) => a + b, 0)} Total
+        <div className="flex flex-wrap gap-2">
+          <span className="text-xs px-3 py-1.5 rounded-full bg-white border border-[var(--c-borderLight)] text-[var(--c-charcoal)] font-bold">
+            {rankedReports.length} highlighted
           </span>
-          <span className="text-xs px-2.5 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 font-medium">
-            {pending.reduce((a, b) => a + b, 0)} Pending
-          </span>
-          <span className="text-xs px-2.5 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 font-medium">
-            {resolved.reduce((a, b) => a + b, 0)} Resolved
+          <span className="text-xs px-3 py-1.5 rounded-full bg-[#FFF8E6] border border-[#F2DCA2] text-[var(--c-accentGold)] font-bold">
+            {totalUpvotes} total upvotes
           </span>
         </div>
       </div>
 
-      {/* ── Chart ────────────────────────── */}
-      <div className="w-full">
-        <Bar data={data} options={options} />
+      <div className="bg-white border border-[var(--c-borderLight)] rounded-[1.5rem] p-3 sm:p-5">
+        <div className="overflow-x-auto overflow-y-hidden hide-scrollbar">
+          <div className="min-w-[560px] sm:min-w-0">
+            <div className="h-[280px] sm:h-[320px] md:h-[340px]">
+              <Bar data={data} options={options} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        {rankedReports.slice(0, 3).map((report, index) => (
+          <button
+            key={report.id}
+            type="button"
+            onClick={() => onSelectReport?.(report)}
+            className="text-left bg-white border border-[var(--c-borderLight)] rounded-2xl p-4 hover:border-[var(--c-olive)] hover:shadow-sm transition-all"
+          >
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <span className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-[var(--c-accentGold)]">
+                <BadgeCheck className="w-3.5 h-3.5" />
+                Rank {index + 1}
+              </span>
+              <span className="text-sm font-black text-[var(--c-charcoal)]">
+                {report.verification_count} upvote{report.verification_count === 1 ? "" : "s"}
+              </span>
+            </div>
+
+            <p className="text-sm font-bold text-[var(--c-charcoal)] leading-relaxed">
+              {truncateLabel(report.description, 72)}
+            </p>
+
+            <div className="mt-4 flex items-center justify-between text-xs text-[var(--c-textSecondary)] font-semibold">
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-[var(--c-olive)]" />
+                {report.pincode}
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-[var(--c-oliveDark)]">
+                Open report
+                <ArrowUpRight className="w-3.5 h-3.5" />
+              </span>
+            </div>
+          </button>
+        ))}
       </div>
     </div>
   );

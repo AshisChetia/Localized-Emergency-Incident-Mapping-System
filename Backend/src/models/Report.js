@@ -6,6 +6,12 @@
 
 import db from "../config/db.js";
 
+const buildVerificationSelect = (viewerId = null, includeReporter = false) => `
+  ${includeReporter ? "u.name AS reporter_name, u.email AS reporter_email," : ""}
+  COALESCE(rv.verification_count, 0) AS verification_count,
+  ${viewerId ? "CASE WHEN uv.id IS NULL THEN 0 ELSE 1 END" : "0"} AS is_verified_by_me
+`;
+
 const Report = {
 
   // ═══════════════════════════════════════
@@ -36,7 +42,7 @@ const Report = {
   //  Joins with users table to include
   //  reporter name and email
   // ═══════════════════════════════════════
-  findById: async (id) => {
+  findById: async (id, viewerId = null) => {
     const [rows] = await db.query(
       `SELECT
           r.id,
@@ -49,12 +55,17 @@ const Report = {
           r.department,
           r.status,
           r.created_at,
-          u.name  AS reporter_name,
-          u.email AS reporter_email
+          ${buildVerificationSelect(viewerId, true)}
        FROM reports r
        JOIN users u ON r.user_id = u.id
+       LEFT JOIN (
+         SELECT report_id, COUNT(*) AS verification_count
+         FROM report_verifications
+         GROUP BY report_id
+       ) rv ON rv.report_id = r.id
+       ${viewerId ? "LEFT JOIN report_verifications uv ON uv.report_id = r.id AND uv.user_id = ?" : ""}
        WHERE r.id = ?`,
-      [id]
+      viewerId ? [viewerId, id] : [id]
     );
     return rows[0] || null;
   },
@@ -68,6 +79,7 @@ const Report = {
     const [rows] = await db.query(
       `SELECT
           id,
+          user_id,
           description,
           image_url,
           latitude,
@@ -75,8 +87,15 @@ const Report = {
           pincode,
           department,
           status,
-          created_at
-       FROM reports
+          created_at,
+          COALESCE(rv.verification_count, 0) AS verification_count,
+          0 AS is_verified_by_me
+       FROM reports r
+       LEFT JOIN (
+         SELECT report_id, COUNT(*) AS verification_count
+         FROM report_verifications
+         GROUP BY report_id
+       ) rv ON rv.report_id = r.id
        WHERE user_id = ?
        ORDER BY created_at DESC`,
       [userId]
@@ -91,7 +110,7 @@ const Report = {
   //  Pending reports appear first then
   //  resolved sorted by newest
   // ═══════════════════════════════════════
-  findByPincode: async (pincode, department = null) => {
+  findByPincode: async (pincode, department = null, viewerId = null) => {
     let query = `SELECT
           r.id,
           r.user_id,
@@ -103,12 +122,17 @@ const Report = {
           r.department,
           r.status,
           r.created_at,
-          u.name  AS reporter_name,
-          u.email AS reporter_email
+          ${buildVerificationSelect(viewerId, true)}
        FROM reports r
        JOIN users u ON r.user_id = u.id
+       LEFT JOIN (
+         SELECT report_id, COUNT(*) AS verification_count
+         FROM report_verifications
+         GROUP BY report_id
+       ) rv ON rv.report_id = r.id
+       ${viewerId ? `LEFT JOIN report_verifications uv ON uv.report_id = r.id AND uv.user_id = ?` : ""}
        WHERE r.pincode = ?`;
-    const params = [pincode];
+    const params = viewerId ? [viewerId, pincode] : [pincode];
 
     if (department) {
       query += ` AND (r.department = ? OR r.department IS NULL)`;
@@ -123,12 +147,47 @@ const Report = {
     return rows;
   },
 
+  findCommunityByPincode: async (pincode, viewerId) => {
+    const [rows] = await db.query(
+      `SELECT
+          r.id,
+          r.user_id,
+          r.description,
+          r.image_url,
+          r.latitude,
+          r.longitude,
+          r.pincode,
+          r.department,
+          r.status,
+          r.created_at,
+          COALESCE(rv.verification_count, 0) AS verification_count,
+          CASE WHEN uv.id IS NULL THEN 0 ELSE 1 END AS is_verified_by_me
+       FROM reports r
+       LEFT JOIN (
+         SELECT report_id, COUNT(*) AS verification_count
+         FROM report_verifications
+         GROUP BY report_id
+       ) rv ON rv.report_id = r.id
+       LEFT JOIN report_verifications uv
+         ON uv.report_id = r.id AND uv.user_id = ?
+       WHERE r.pincode = ?
+         AND r.user_id <> ?
+       ORDER BY
+          CASE WHEN r.status = 'pending' THEN 0 ELSE 1 END,
+          COALESCE(rv.verification_count, 0) DESC,
+          r.created_at DESC`,
+      [viewerId, pincode, viewerId]
+    );
+
+    return rows;
+  },
+
   // ═══════════════════════════════════════
   //  FIND ALL REPORTS (ADMIN)
   //  Supports optional status and pincode
   //  filters for Super Admin overview
   // ═══════════════════════════════════════
-  findAll: async ({ status = null, pincode = null } = {}) => {
+  findAll: async ({ status = null, pincode = null } = {}, viewerId = null) => {
     let query = `
       SELECT
           r.id,
@@ -141,14 +200,19 @@ const Report = {
           r.department,
           r.status,
           r.created_at,
-          u.name  AS reporter_name,
-          u.email AS reporter_email
+          ${buildVerificationSelect(viewerId, true)}
        FROM reports r
        JOIN users u ON r.user_id = u.id
+       LEFT JOIN (
+         SELECT report_id, COUNT(*) AS verification_count
+         FROM report_verifications
+         GROUP BY report_id
+       ) rv ON rv.report_id = r.id
+       ${viewerId ? "LEFT JOIN report_verifications uv ON uv.report_id = r.id AND uv.user_id = ?" : ""}
        WHERE 1=1
     `;
 
-    const params = [];
+    const params = viewerId ? [viewerId] : [];
 
     if (status) {
       query += " AND r.status = ?";

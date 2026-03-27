@@ -5,7 +5,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { createReport } from "../services/reportService";
-import { getDepartmentsByPincode } from "../services/authService";
 import Loader from "./Loader";
 import toast from "react-hot-toast";
 import {
@@ -33,9 +32,6 @@ const ReportForm = ({ onSuccess, onClose }) => {
   const { user } = useAuth();
 
   const [description, setDescription] = useState("");
-  const [department, setDepartment] = useState("");
-  const [availableDepartments, setAvailableDepartments] = useState([]);
-  const [loadingDepartments, setLoadingDepartments] = useState(true);
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [location, setLocation] = useState(null);
@@ -51,25 +47,10 @@ const ReportForm = ({ onSuccess, onClose }) => {
   useEffect(() => {
     document.body.style.overflow = "hidden";
     
-    // Fetch available departments for user's pincode
-    const fetchDepartments = async () => {
-      try {
-        if (user?.pincode) {
-          const res = await getDepartmentsByPincode(user.pincode);
-          setAvailableDepartments(res.data.departments || []);
-        }
-      } catch (error) {
-        console.error("Failed to fetch departments", error);
-      } finally {
-        setLoadingDepartments(false);
-      }
-    };
-    fetchDepartments();
-
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [user?.pincode]);
+  }, []);
 
   const formStyle = {
     "--c-offWhite": colors.offWhite,
@@ -163,7 +144,6 @@ const ReportForm = ({ onSuccess, onClose }) => {
 
   const validate = () => {
     const newErrors = {};
-    if (!department) newErrors.department = "Please select the relevant department";
     
     if (!description.trim()) newErrors.description = "Please describe the incident";
     else if (description.trim().length < 20) newErrors.description = "Description must be at least 20 characters";
@@ -191,7 +171,6 @@ const ReportForm = ({ onSuccess, onClose }) => {
     try {
       const formData = new FormData();
       formData.append("description", description.trim());
-      formData.append("department", department);
       formData.append("latitude", location.latitude);
       formData.append("longitude", location.longitude);
       formData.append("image", imageFile);
@@ -252,34 +231,23 @@ const ReportForm = ({ onSuccess, onClose }) => {
           <div className="overflow-y-auto p-6 flex flex-col gap-6 hide-scrollbar">
             <form id="report-form" onSubmit={handleSubmit} className="flex flex-col gap-6">
 
-              <div className="flex flex-col gap-1.5">
-                <label className="flex items-center gap-2 text-sm font-bold text-[var(--c-charcoal)]">
-                  <Building2 className="w-4 h-4 text-[var(--c-olive)]" /> Department
-                </label>
-                {loadingDepartments ? (
-                  <div className="w-full bg-gray-50 border border-[var(--c-borderLight)] rounded-xl px-4 py-3 text-sm text-gray-400 flex items-center gap-2">
-                     <span className="w-4 h-4 border-2 border-[var(--c-olive)]/30 border-t-[var(--c-olive)] rounded-full animate-spin" /> Checking available departments...
-                  </div>
-                ) : availableDepartments.length === 0 ? (
-                  <div className="w-full bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600 font-medium">
-                     No authorities are currently registered in your pincode ({user?.pincode}). You cannot submit reports yet.
-                  </div>
-                ) : (
-                  <select
-                    value={department}
-                    onChange={(e) => {
-                      setDepartment(e.target.value);
-                      if (errors.department) setErrors((prev) => ({ ...prev, department: null }));
-                    }}
-                    className={`w-full bg-white border rounded-xl px-4 py-3 text-[var(--c-textPrimary)] text-sm appearance-none cursor-pointer focus:outline-none focus:ring-1 transition-colors ${errors.department ? "border-red-400 focus:ring-red-400" : "border-[var(--c-borderLight)] focus:ring-[var(--c-olive)] focus:border-[var(--c-olive)]"}`}
-                  >
-                    <option value="" disabled>Select the relevant department</option>
-                    {availableDepartments.map(dept => (
-                      <option key={dept} value={dept}>{dept}</option>
-                    ))}
-                  </select>
-                )}
-                {errors.department && <p className="text-red-500 text-xs font-medium">{errors.department}</p>}
+              {/* 🤖 AI Routing Badge */}
+              <div className="bg-[var(--c-sage)]/30 border border-[var(--c-olive)]/20 rounded-xl p-4 flex items-start gap-3 mt-1 shadow-sm">
+                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0 border border-[var(--c-olive)]/30 shadow-sm mt-0.5">
+                  <span className="text-lg">🤖</span>
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-[var(--c-charcoal)] mb-0.5 flex items-center gap-1.5">
+                    AI Auto-Routing Enabled
+                    <span className="relative flex w-2 h-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </span>
+                  </h4>
+                  <p className="text-xs font-medium text-[var(--c-textSecondary)] leading-relaxed">
+                    Our Vision AI will instantly analyze your uploaded image upon submission and automatically assign it to the correct local department (e.g., municipalty, PWD) without you having to guess.
+                  </p>
+                </div>
               </div>
 
               <div className="flex flex-col gap-1.5">

@@ -4,12 +4,15 @@ const router = express.Router();
 import {
   createReport,
   getMyReports,
+  getCommunityReports,
   getReportsByPincode,
   getReportById,
   updateReportStatus,
   getAllReports,
   getReportStats,
-  deleteReport // Added
+  deleteReport,
+  verifyReport,
+  unverifyReport
 } from "../controllers/reportController.js";
 
 import  authMiddleware  from "../middleware/authMiddleware.js";
@@ -40,12 +43,33 @@ router.get(
   getMyReports
 );
 
+router.get(
+  "/community",
+  authMiddleware,
+  roleMiddleware("user"),
+  getCommunityReports
+);
+
 // Delete a report
 router.delete(
   "/:id",
   authMiddleware,
   roleMiddleware("user"),
   deleteReport
+);
+
+router.post(
+  "/:id/verify",
+  authMiddleware,
+  roleMiddleware("user"),
+  verifyReport
+);
+
+router.delete(
+  "/:id/verify",
+  authMiddleware,
+  roleMiddleware("user"),
+  unverifyReport
 );
 
 // ── Authority Routes ────────────────────────────────
