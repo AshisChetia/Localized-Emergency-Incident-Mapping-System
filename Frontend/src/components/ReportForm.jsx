@@ -29,6 +29,7 @@ const isInsideIndia = (lat, lng) =>
   lng <= INDIA_BOUNDS.maxLng;
 
 const ReportForm = ({ onSuccess, onClose }) => {
+  const manualSubmitRef = useRef(false);
   const { user } = useAuth();
 
   const [description, setDescription] = useState("");
@@ -158,6 +159,10 @@ const ReportForm = ({ onSuccess, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!manualSubmitRef.current) return;
+    manualSubmitRef.current = false;
+
     if (submitting) return;
 
     if (!validate()) {
@@ -222,7 +227,7 @@ const ReportForm = ({ onSuccess, onClose }) => {
               </div>
             </div>
             {onClose && (
-              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-500 transition-colors">
+              <button type="button" onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-red-100 hover:text-red-500 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             )}
@@ -380,7 +385,7 @@ const ReportForm = ({ onSuccess, onClose }) => {
                 Cancel
               </button>
             )}
-            <button type="submit" form="report-form" disabled={submitting} className="flex-[2] bg-[var(--c-olive)] hover:bg-[var(--c-oliveDark)] text-white text-sm font-bold px-4 py-3.5 rounded-xl shadow-md transition-all transform hover:-translate-y-0.5">
+            <button type="submit" form="report-form" onClick={() => { manualSubmitRef.current = true; }} disabled={submitting} className="flex-[2] bg-[var(--c-olive)] hover:bg-[var(--c-oliveDark)] text-white text-sm font-bold px-4 py-3.5 rounded-xl shadow-md transition-all transform hover:-translate-y-0.5">
               {submitting ? <Loader variant="inline" text="Routing Report..." /> : <span className="flex items-center justify-center gap-2"><Upload className="w-4 h-4" /> Submit Report</span>}
             </button>
           </div>
