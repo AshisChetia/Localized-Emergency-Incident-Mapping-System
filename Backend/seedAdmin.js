@@ -41,8 +41,6 @@ dotenv.config();
     );
 
     console.log(`✅ Admin seeded successfully!`);
-    console.log(`📧 Clean Email: "${email}"`);
-    console.log(`🔑 Clean Password: "${password}"`);
     process.exit(0);
 
   } catch (err) {

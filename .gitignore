@@ -6,5 +6,5 @@ node_modules/
 .env.*
 !.env.example
 
-getAdmin.js
-seedAdmin.js
+Backend/getAdmin.js
+Backend/seedAdmin.js
