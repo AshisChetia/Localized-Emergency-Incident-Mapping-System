@@ -27,23 +27,34 @@ import Loader from "./Loader";
 // that belongs to a different role,
 // redirect them to their own dashboard
 const roleDashboardPath = {
-  user:      "/user/dashboard",
-  authority: "/authority/dashboard",
-  admin:     "/admin/dashboard",
+  user:                 "/user/dashboard",
+  authority:            "/authority/dashboard",
+  department_manager:   "/department-manager/dashboard",
+  admin:                "/admin/dashboard",
 };
 
 // ── Role → login path map ───────────────
 // If user is NOT logged in, send them to
 // the correct login page for that route
 const roleLoginPath = {
-  user:      "/login",
-  authority: "/authority/login",
-  admin:     "/admin/login",
+  user:                 "/login",
+  authority:            "/authority/login",
+  department_manager:   "/department-manager/login",
+  admin:                "/admin/login",
 };
 
 const ProtectedRoute = ({ children, allowedRole }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
+
+  // Debug logging
+  console.log(`ProtectedRoute check for ${allowedRole}:`, {
+    loading,
+    userExists: !!user,
+    userRole: user?.role,
+    userNeedsLogin: !user,
+    wrongRole: user && user.role !== allowedRole,
+  });
 
   // ── Still checking auth state ───────────
   // Show fullscreen loader while AuthContext
@@ -59,6 +70,7 @@ const ProtectedRoute = ({ children, allowedRole }) => {
   // redirect back after login if needed.
   if (!user) {
     const loginPath = roleLoginPath[allowedRole] || "/login";
+    console.log(`Redirecting to login: ${loginPath}`);
     return (
       <Navigate
         to={loginPath}
@@ -74,10 +86,12 @@ const ProtectedRoute = ({ children, allowedRole }) => {
   // /authority/dashboard
   if (user.role !== allowedRole) {
     const correctDashboard = roleDashboardPath[user.role] || "/";
+    console.log(`Role mismatch: user is ${user.role}, route requires ${allowedRole}. Redirecting to ${correctDashboard}`);
     return <Navigate to={correctDashboard} replace />;
   }
 
   // ── Authorized → render the page ───────
+  console.log(`ProtectedRoute authorized for ${allowedRole}`);
   return children;
 };
 

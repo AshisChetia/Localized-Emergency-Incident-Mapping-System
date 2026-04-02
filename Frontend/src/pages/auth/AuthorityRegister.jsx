@@ -1,5 +1,7 @@
 // ─────────────────────────────────────────
 // pages/auth/AuthorityRegister.jsx
+// Municipal Chief Registration
+// Simplified - Chief registers for entire zone
 // ─────────────────────────────────────────
 
 import { useState } from "react";
@@ -7,19 +9,16 @@ import { Link } from "react-router-dom";
 import { registerAuthority } from "../../services/authService";
 import Loader from "../../components/Loader";
 import toast from "react-hot-toast";
-import { Building2, Mail, Lock, Eye, EyeOff, User, Hash, CheckCircle, ArrowRight, ChevronDown } from "lucide-react";
+import { Building2, Mail, Lock, Eye, EyeOff, User, Hash, CheckCircle, ArrowRight } from "lucide-react";
 import { colors, fonts } from "../../styles/designTokens";
-
-const DEPARTMENTS = [
-  "Municipal Corporation",
-  "Public Works Department",
-  "Electricity Department",
-  "Water Supply Department",
-];
 
 const AuthorityRegister = () => {
   const [formData, setFormData] = useState({
-    name: "", email: "", password: "", confirmPassword: "", pincode: "", department: "",
+    name: "", 
+    email: "", 
+    password: "", 
+    confirmPassword: "", 
+    pincode: "", 
   });
   const [errors, setErrors] = useState({});
   const [showPass, setShowPass] = useState(false);
@@ -47,7 +46,6 @@ const AuthorityRegister = () => {
     const newErrors = {};
     if (!formData.name.trim()) newErrors.name = "Required";
     if (!formData.email.trim()) newErrors.email = "Required";
-    if (!formData.department) newErrors.department = "Required";
     if (!formData.password) newErrors.password = "Required";
     if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = "Must match";
     if (formData.pincode.length !== 6) newErrors.pincode = "6 digits required";
@@ -65,7 +63,6 @@ const AuthorityRegister = () => {
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
         pincode: formData.pincode,
-        department: formData.department,
       });
       setIsSuccess(true);
       window.scrollTo(0, 0);
@@ -139,30 +136,13 @@ const AuthorityRegister = () => {
             {errors.email && <p className="text-red-500 text-[10px]">{errors.email}</p>}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-[var(--c-charcoal)] uppercase tracking-wider">Jurisdiction Pincode</label>
-              <div className="relative">
-                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input type="text" name="pincode" value={formData.pincode} onChange={handleChange} placeholder="400001" maxLength={6} className={inputClass} />
-              </div>
-              {errors.pincode && <p className="text-red-500 text-[10px]">{errors.pincode}</p>}
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] font-bold text-[var(--c-charcoal)] uppercase tracking-wider">Jurisdiction Pincode</label>
+            <div className="relative">
+              <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input type="text" name="pincode" value={formData.pincode} onChange={handleChange} placeholder="400001" maxLength={6} className={inputClass} />
             </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-[10px] font-bold text-[var(--c-charcoal)] uppercase tracking-wider">Department</label>
-              <div className="relative">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <select name="department" value={formData.department} onChange={handleChange} className={`${inputClass} appearance-none pr-8`}>
-                  <option value="" disabled>Select Department</option>
-                  {DEPARTMENTS.map((dept) => (
-                    <option key={dept} value={dept}>{dept}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-              </div>
-              {errors.department && <p className="text-red-500 text-[10px]">{errors.department}</p>}
-            </div>
+            {errors.pincode && <p className="text-red-500 text-[10px]">{errors.pincode}</p>}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

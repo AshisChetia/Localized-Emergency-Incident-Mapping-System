@@ -22,19 +22,48 @@ const StatusBadge = ({ status, size = "default" }) => {
 
   // ── Status config ───────────────────────
   const statusConfig = {
-    pending: {
-      label:     "Pending",
+    reported: {
+      label:     "Reported",
       icon:      <Clock className={size === "small" ? "w-3 h-3" : "w-4 h-4"} />,
-      styles:    "bg-yellow-500/15 text-yellow-400 border border-yellow-500/30",
-      dot:       "bg-yellow-400",
+      styles:    "bg-gray-500/15 text-gray-700 border border-gray-500/30",
+      dot:       "bg-gray-500",
+      pulse:     false,
+    },
+    under_review: {
+      label:     "Under Review",
+      icon:      <Clock className={size === "small" ? "w-3 h-3" : "w-4 h-4"} />,
+      styles:    "bg-yellow-500/15 text-yellow-600 border border-yellow-500/30",
+      dot:       "bg-yellow-500",
+      pulse:     true,
+    },
+    in_progress: {
+      label:     "In Progress",
+      icon:      <Clock className={size === "small" ? "w-3 h-3" : "w-4 h-4"} />,
+      styles:    "bg-blue-500/15 text-blue-600 border border-blue-500/30",
+      dot:       "bg-blue-500",
       pulse:     true,
     },
     resolved: {
       label:     "Resolved",
       icon:      <CheckCircle className={size === "small" ? "w-3 h-3" : "w-4 h-4"} />,
-      styles:    "bg-green-500/15 text-green-400 border border-green-500/30",
-      dot:       "bg-green-400",
+      styles:    "bg-green-500/15 text-green-600 border border-green-500/30",
+      dot:       "bg-green-500",
       pulse:     false,
+    },
+    closed: {
+      label:     "Closed",
+      icon:      <CheckCircle className={size === "small" ? "w-3 h-3" : "w-4 h-4"} />,
+      styles:    "bg-emerald-700/15 text-emerald-800 border border-emerald-700/30",
+      dot:       "bg-emerald-700",
+      pulse:     false,
+    },
+    // Legacy support
+    pending: {
+      label:     "Pending",
+      icon:      <Clock className={size === "small" ? "w-3 h-3" : "w-4 h-4"} />,
+      styles:    "bg-yellow-500/15 text-yellow-600 border border-yellow-500/30",
+      dot:       "bg-yellow-500",
+      pulse:     true,
     },
   };
 

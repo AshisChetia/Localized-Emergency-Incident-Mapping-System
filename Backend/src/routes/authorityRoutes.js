@@ -19,6 +19,10 @@ import { isAuthority }   from "../middleware/roleMiddleware.js";
 import {
   getAuthorityDashboard,
   getAuthorityProfile,
+  createTeamMember,
+  getTeamMembers,
+  updateTeamMember,
+  removeTeamMember,
 } from "../controllers/authorityController.js";
 
 import {
@@ -112,6 +116,47 @@ router.patch(
   authMiddleware,
   isAuthority,
   updateReportStatus
+);
+
+// ═════════════════════════════════════════
+//  TEAM MEMBER MANAGEMENT ROUTES
+//  (Authority can manage their team members)
+// ═════════════════════════════════════════
+
+// ── POST /api/authority/team-members ────
+// Chief creates a new department manager
+router.post(
+  "/team-members",
+  authMiddleware,
+  isAuthority,
+  createTeamMember
+);
+
+// ── GET /api/authority/team-members ────
+// Chief views all their team members
+router.get(
+  "/team-members",
+  authMiddleware,
+  isAuthority,
+  getTeamMembers
+);
+
+// ── PUT /api/authority/team-members/:memberId ──
+// Chief updates a team member's details
+router.put(
+  "/team-members/:memberId",
+  authMiddleware,
+  isAuthority,
+  updateTeamMember
+);
+
+// ── DELETE /api/authority/team-members/:memberId ──
+// Chief deactivates a team member
+router.delete(
+  "/team-members/:memberId",
+  authMiddleware,
+  isAuthority,
+  removeTeamMember
 );
 
 export default router;

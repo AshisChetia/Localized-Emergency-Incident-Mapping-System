@@ -89,11 +89,17 @@ const isAuthority = roleMiddleware("authority");
 // ── Only the super admin ──
 const isAdmin = roleMiddleware("admin");
 
+// ── Only department managers ──
+const isDepartmentManager = roleMiddleware("department_manager");
+
 // ── Authority or Admin (shared access) ──
 const isAuthorityOrAdmin = multiRoleMiddleware(["authority", "admin"]);
 
+// ── Authority or Department Manager (shared status update access) ──
+const isAuthorityOrDeptManager = multiRoleMiddleware(["authority", "department_manager"]);
+
 // ── Any authenticated user of any role ──
-const isAnyRole = multiRoleMiddleware(["user", "authority", "admin"]);
+const isAnyRole = multiRoleMiddleware(["user", "authority", "admin", "department_manager"]);
 
 export {
   roleMiddleware,
@@ -101,6 +107,8 @@ export {
   isUser,
   isAuthority,
   isAdmin,
+  isDepartmentManager,
   isAuthorityOrAdmin,
+  isAuthorityOrDeptManager,
   isAnyRole,
 };

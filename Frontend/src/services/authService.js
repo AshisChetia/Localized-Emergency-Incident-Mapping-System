@@ -31,6 +31,34 @@ export const loginAuthority = (data) =>
   api.post("/auth/authority/login", data);
 
 // ═════════════════════════════════════════
+//  DEPARTMENT MANAGER AUTH
+// ═════════════════════════════════════════
+
+// POST /api/auth/department-manager/login
+export const loginTeamMember = async (data) => {
+  console.log("authService.loginTeamMember - Sending request with:", { email: data.email });
+  try {
+    const response = await api.post("/auth/department-manager/login", data);
+    console.log("authService.loginTeamMember - API Response received:", {
+      status: response.status,
+      hasToken: !!response.data.token,
+      hasTeamMember: !!response.data.teamMember,
+      teamMemberKeys: response.data.teamMember ? Object.keys(response.data.teamMember) : [],
+      teamMemberRole: response.data.teamMember?.role,
+      fullResponse: response.data,
+    });
+    return response;
+  } catch (error) {
+    console.error("authService.loginTeamMember - API Error:", {
+      message: error.message,
+      status: error.response?.status,
+      errorData: error.response?.data,
+    });
+    throw error;
+  }
+};
+
+// ═════════════════════════════════════════
 //  ADMIN AUTH
 // ═════════════════════════════════════════
 

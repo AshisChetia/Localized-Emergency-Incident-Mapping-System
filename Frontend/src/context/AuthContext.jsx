@@ -118,6 +118,13 @@ export const AuthProvider = ({ children }) => {
   //  login(data.token, data.user)
   // ═══════════════════════════════════════
   const login = (token, userData) => {
+    // ── Debug logging ────────────────────
+    console.log("Login called with:", {
+      token: token ? "present" : "missing",
+      userData,
+      userRole: userData?.role,
+    });
+    
     // ── Save token to localStorage ───────
     saveToken(token, userData.role);
 
@@ -125,6 +132,11 @@ export const AuthProvider = ({ children }) => {
     setUser({
       ...userData,
       token,
+    });
+    
+    console.log("User context updated:", {
+      ...userData,
+      token: token ? "present" : "missing",
     });
   };
 
@@ -182,6 +194,7 @@ export const AuthProvider = ({ children }) => {
   const isUser          = user?.role === "user";
   const isAuthority     = user?.role === "authority";
   const isAdmin         = user?.role === "admin";
+  const isDepartmentManager = user?.role === "department_manager";
 
   // ═══════════════════════════════════════
   //  CONTEXT VALUE
@@ -207,6 +220,7 @@ export const AuthProvider = ({ children }) => {
     isUser,
     isAuthority,
     isAdmin,
+    isDepartmentManager,
   };
 
   return (

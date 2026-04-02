@@ -1,5 +1,6 @@
 import cloudinary from "../config/cloudinary.js";
 import reverseGeocode from "../utils/geocode.js";
+import db from "../config/db.js";
 import Report from "../models/Report.js";
 import Authority from "../models/Authority.js";
 import ReportVerification from "../models/ReportVerification.js";
@@ -82,8 +83,8 @@ const normalizeReports = (reports) => {
 // ─────────────────────────────────────────
 
 const createReport = async (req, res) => {
-  // We ONLY accept visual coordinates, description, and department from the frontend.
-  const { description, latitude, longitude, department } = req.body;
+  // We accept visual coordinates, description, and optional department override from the frontend.
+  const { description, latitude, longitude, department: userDepartmentOverride } = req.body;
   const userId = req.user.id;
 
   // 👉 THE GUARANTEED ROUTING LOCK: 
@@ -108,7 +109,7 @@ const createReport = async (req, res) => {
       return res.status(500).json({ message: "Image upload failed." });
     }
 
-    // ── 2. AI AUTO-ROUTING (GEMINI) ──
+    // ── 2. DEPARTMENT ROUTING ──
     let assignedDepartment = "Municipal Corporation"; // Safe system default
     const MASTER_DEPARTMENTS = [
       "Municipal Corporation",
@@ -117,42 +118,58 @@ const createReport = async (req, res) => {
       "Water Supply Department"
     ];
 
-    try {
-      const prompt = `You are an automated emergency incident routing AI. Analyze this image. Based strictly on the visual evidence, classify this incident into EXACTLY ONE of the following 4 departments:
-      - Municipal Corporation (civic issues, garbage, stray animals, public nuisances)
-      - Public Works Department (road damage, potholes, infrastructure failure, structural collapse)
-      - Electricity Department (fallen power lines, broken streetlights, electrical hazards)
-      - Water Supply Department (burst pipes, severe flooding, sewage leaks, drainage issues)
-      Even if the image is confusing, blurry, or seemingly unrelated, you MUST pick the single closest matching department from these 4. NEVER return 'General' or any other text. Only return the exact department name.`;
+    // ── 2a. CHECK IF USER PROVIDED A MANUAL DEPARTMENT OVERRIDE ──
+    const userOverride = userDepartmentOverride?.trim();
+    const isValidOverride = userOverride && MASTER_DEPARTMENTS.find(d => d.toLowerCase() === userOverride.toLowerCase());
 
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: [
-          prompt,
-          {
-            inlineData: {
-              data: req.file.buffer.toString("base64"),
-              mimeType: req.file.mimetype
+    if (isValidOverride) {
+      // User explicitly chose a department — skip AI routing
+      assignedDepartment = isValidOverride;
+      console.log(`📋 User override: Department set to "${assignedDepartment}"`);
+    } else {
+      // ── 2b. AI AUTO-ROUTING (GEMINI) ──
+      try {
+        const prompt = `You are an automated emergency incident routing AI. Analyze BOTH the attached image AND the citizen's description below.
+        
+        Citizen's Description: "${description}"
+        
+        The description contains critical context that might not be perfectly clear from the image alone. You must weigh BOTH the visual evidence and the text to accurately classify this incident into EXACTLY ONE of the following 4 departments:
+        - Municipal Corporation (civic issues, garbage, stray animals, public nuisances)
+        - Public Works Department (road damage, potholes, infrastructure failure, structural collapse)
+        - Electricity Department (fallen power lines, broken streetlights, electrical hazards)
+        - Water Supply Department (burst pipes, severe flooding, sewage leaks, drainage issues)
+        
+        Even if the image is confusing, rely on the description to make your decision. MUST pick the single closest matching department from these 4. NEVER return 'General' or any other text. Only return the exact department name.`;
+
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: [
+            prompt,
+            {
+              inlineData: {
+                data: req.file.buffer.toString("base64"),
+                mimeType: req.file.mimetype
+              }
             }
-          }
-        ]
-      });
+          ]
+        });
 
-      const aiResponse = response.text.trim();
+        const aiResponse = response.text.trim();
 
-      // Strict exact match enforcement against the 4 master categories
-      const matchedDept = MASTER_DEPARTMENTS.find(d => d.toLowerCase() === aiResponse.toLowerCase());
+        // Strict exact match enforcement against the 4 master categories
+        const matchedDept = MASTER_DEPARTMENTS.find(d => d.toLowerCase() === aiResponse.toLowerCase());
 
-      if (matchedDept) {
-        assignedDepartment = matchedDept;
-      } else {
-        // Absolute fallback if Gemini completely hallucinates or returns something invalid
+        if (matchedDept) {
+          assignedDepartment = matchedDept;
+        } else {
+          // Absolute fallback if Gemini completely hallucinates or returns something invalid
+          assignedDepartment = "Municipal Corporation";
+        }
+      } catch (aiError) {
+        console.error("AI Routing Error:", aiError);
         assignedDepartment = "Municipal Corporation";
       }
-    } catch (aiError) {
-      console.error("AI Routing Error:", aiError);
-      assignedDepartment = "Municipal Corporation";
     }
 
     // ── 3. DATABASE SAVE ──
@@ -160,11 +177,46 @@ const createReport = async (req, res) => {
       userId,
       description,
       imageUrl,
-      latitude: parseFloat(latitude),   // Strict physical GPS point
-      longitude: parseFloat(longitude), // Strict physical GPS point
-      pincode: routingPincode,          // Strict Database Routing Token
-      department: assignedDepartment    // 🤖 AI Assigned!
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+      pincode: routingPincode,
+      department: assignedDepartment
     });
+
+    // ── 4. AUTO-ASSIGN TO TEAM MEMBER ──
+    // Map AI department names to sub_department IDs
+    const departmentMapping = {
+      "Municipal Corporation": "sanitation",
+      "Public Works Department": "roads",
+      "Electricity Department": null, // Not in our sub-departments
+      "Water Supply Department": "water_supply"
+    };
+
+    const subDeptId = departmentMapping[assignedDepartment];
+
+    if (subDeptId) {
+      try {
+        // Find the team member managing this sub_department for the authority in this pincode
+        const [rows] = await db.query(
+          `SELECT tm.id FROM team_members tm
+           JOIN authorities a ON tm.authority_id = a.id
+           WHERE a.pincode = ? AND tm.sub_department = ? AND tm.is_active = true
+           LIMIT 1`,
+          [routingPincode, subDeptId]
+        );
+
+        if (rows && rows.length > 0) {
+          // Update the report to assign it to this team member
+          await db.query(
+            `UPDATE reports SET assigned_to = ?, sub_department = ? WHERE id = ?`,
+            [rows[0].id, subDeptId, result.insertId]
+          );
+        }
+      } catch (assignError) {
+        console.error("Auto-assign to team member failed:", assignError);
+        // Don't fail the report creation if auto-assignment fails
+      }
+    }
 
     const newReport = await Report.findById(result.insertId);
 
@@ -247,8 +299,10 @@ const getReportById = async (req, res) => {
       if (report.pincode !== authorityPincode) {
         return res.status(403).json({ message: "This report does not belong to your jurisdiction" });
       }
-      if (report.department && report.department !== req.user.department) {
-        return res.status(403).json({ message: "This report belongs to a different department" });
+    }
+    if (role === "department_manager") {
+      if (report.pincode !== req.user.pincode) {
+        return res.status(403).json({ message: "This report does not belong to your jurisdiction" });
       }
     }
     const normalized = normalizeReport({
@@ -266,23 +320,41 @@ const getReportById = async (req, res) => {
 const updateReportStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
-  const authorityPincode = req.user.pincode;
+  const userPincode = req.user.pincode;
+  const userRole = req.user.role;
 
   try {
-    const allowedStatuses = ["pending", "resolved"];
+    const allowedStatuses = ["reported", "under_review", "in_progress", "resolved", "closed"];
     if (!status || !allowedStatuses.includes(status)) {
-      return res.status(400).json({ message: "Status must be either 'pending' or 'resolved'" });
+      return res.status(400).json({ message: "Status must be one of: reported, under_review, in_progress, resolved, closed" });
     }
 
     const report = await Report.findById(id);
     if (!report) return res.status(404).json({ message: "Report not found" });
 
-    if (report.pincode !== authorityPincode) {
+    // ── Jurisdiction check ──
+    if (report.pincode !== userPincode) {
       return res.status(403).json({ message: "You can only update reports within your jurisdiction" });
     }
 
-    if (report.department && report.department !== req.user.department) {
-      return res.status(403).json({ message: "You can only update reports assigned to your department" });
+    // ── Department Manager: can only set up to 'resolved', not 'closed' ──
+    if (userRole === "department_manager") {
+      if (status === "closed") {
+        return res.status(403).json({ message: "Only the authority can close a report" });
+      }
+      if (report.assigned_to !== req.user.id) {
+        // Check if report matches their sub_department even if not directly assigned
+        const departmentMapping = {
+          "Municipal Corporation": "sanitation",
+          "Public Works Department": "roads",
+          "Electricity Department": "electricity",
+          "Water Supply Department": "water_supply"
+        };
+        const reportSubDept = departmentMapping[report.department];
+        if (reportSubDept !== req.user.sub_department) {
+          return res.status(403).json({ message: "This report is not assigned to your department" });
+        }
+      }
     }
 
     if (report.status === status) {
@@ -321,6 +393,84 @@ const getReportStats = async (req, res) => {
     return res.status(200).json({ pincode: authorityPincode, overall: normalizedOverall, monthly: normalizedMonthly });
   } catch (error) {
     return res.status(500).json({ message: "Server error while fetching report statistics" });
+  }
+};
+
+// ═════════════════════════════════════════
+// GET TEAM MEMBER'S ASSIGNED REPORTS
+// GET /api/reports/team-member/assigned
+// Returns reports assigned to this department manager
+// ═════════════════════════════════════════
+const getTeamMemberAssignedReports = async (req, res) => {
+  const teamMemberId = req.user.id;
+  const pincode = req.user.pincode;
+  const subDept = req.user.sub_department;
+  
+  // Map sub_department to the Master Department name stored in the 'department' column
+  const reverseDepartmentMapping = {
+    sanitation: "Municipal Corporation",
+    roads: "Public Works Department",
+    water_supply: "Water Supply Department",
+  };
+  const masterDept = reverseDepartmentMapping[subDept] || subDept;
+
+  try {
+    // Query all reports in the same pincode and belonging to this department
+    const [reports] = await db.query(
+      `SELECT 
+          id, user_id, description, pincode, 
+          status, assigned_to, sub_department, department,
+          image_url, latitude, longitude, 
+          created_at
+       FROM reports
+       WHERE pincode = ? AND (department = ? OR sub_department = ?)
+       ORDER BY created_at DESC`,
+      [pincode, masterDept, subDept]
+    );
+
+    const normalized = normalizeReports(reports);
+
+    // Calculate stats for this department's reports
+    const [reportedStats] = await db.query(
+      `SELECT COUNT(*) as count FROM reports 
+       WHERE pincode = ? AND (department = ? OR sub_department = ?) AND status = 'reported'`,
+      [pincode, masterDept, subDept]
+    );
+    const [underReviewStats] = await db.query(
+      `SELECT COUNT(*) as count FROM reports 
+       WHERE pincode = ? AND (department = ? OR sub_department = ?) AND status = 'under_review'`,
+      [pincode, masterDept, subDept]
+    );
+    const [inProgressStats] = await db.query(
+      `SELECT COUNT(*) as count FROM reports 
+       WHERE pincode = ? AND (department = ? OR sub_department = ?) AND status = 'in_progress'`,
+      [pincode, masterDept, subDept]
+    );
+    const [resolvedStats] = await db.query(
+      `SELECT COUNT(*) as count FROM reports 
+       WHERE pincode = ? AND (department = ? OR sub_department = ?) AND status = 'resolved'`,
+      [pincode, masterDept, subDept]
+    );
+    const [closedStats] = await db.query(
+      `SELECT COUNT(*) as count FROM reports 
+       WHERE pincode = ? AND (department = ? OR sub_department = ?) AND status = 'closed'`,
+      [pincode, masterDept, subDept]
+    );
+
+    return res.status(200).json({
+      reports: normalized,
+      stats: {
+        reported: reportedStats[0]?.count || 0,
+        underReview: underReviewStats[0]?.count || 0,
+        inProgress: inProgressStats[0]?.count || 0,
+        resolved: resolvedStats[0]?.count || 0,
+        closed: closedStats[0]?.count || 0,
+        total: normalized.length
+      }
+    });
+  } catch (error) {
+    console.error("Get Team Member Reports Error:", error);
+    return res.status(500).json({ message: "Server error while fetching assigned reports" });
   }
 };
 
@@ -447,6 +597,7 @@ export {
   updateReportStatus,
   getAllReports,
   getReportStats,
+  getTeamMemberAssignedReports,
   deleteReport,
   verifyReport,
   unverifyReport

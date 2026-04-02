@@ -9,6 +9,8 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import Authority from "../models/Authority.js";
 import Admin from "../models/Admin.js";
+import TeamMember from "../models/TeamMember.js";
+import { isValidDepartmentCombination } from "../utils/departments.js";
 
 // ─────────────────────────────────────────
 // HELPER: Generate JWT Token
@@ -141,35 +143,39 @@ export const loginUser = async (req, res) => {
 
 // ── Register Authority (Request Only) ──────
 export const registerAuthority = async (req, res) => {
-  const { name, email, password, pincode, department } = req.body;
+  const { name, email, password, pincode } = req.body;
 
   try {
-    if (!name || !email || !password || !pincode || !department) {
+    if (!name || !email || !password || !pincode) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const authorityExists = await Authority.emailExists(email);
+    const normalizedName = name?.trim();
+    const normalizedEmail = email?.trim().toLowerCase();
+    const normalizedPincode = String(pincode || "").trim();
+
+    if (!PINCODE_REGEX.test(normalizedPincode)) {
+      return res.status(400).json({ message: "Pincode must be exactly 6 digits" });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters long" });
+    }
+
+    const authorityExists = await Authority.emailExists(normalizedEmail);
     if (authorityExists) {
       return res.status(409).json({
         message: "An authority with this email already exists or has a pending request",
       });
     }
 
-    const deptExists = await Authority.findByPincodeAndDepartment(pincode, department);
-    if (deptExists) {
-      return res.status(409).json({
-        message: `An authority for ${department} already exists in pincode ${pincode}. Only one authority per department per pincode is allowed.`,
-      });
-    }
-
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await Authority.create({
-      name,
-      email,
+      name: normalizedName,
+      email: normalizedEmail,
       password: hashedPassword,
-      pincode,
-      department,
+      pincode: normalizedPincode,
     });
 
     return res.status(201).json({
@@ -212,12 +218,13 @@ export const loginAuthority = async (req, res) => {
     return res.status(200).json({
       message: "Login successful",
       token,
-      authority: { // FIXED: Sent as 'authority'
+      authority: {
         id: authority.id,
         name: authority.name,
         email: authority.email,
         pincode: authority.pincode,
-        department: authority.department,
+        major_department: authority.major_department,
+        sub_department: authority.sub_department,
         role: "authority",
       },
     });
@@ -281,6 +288,85 @@ export const loginAdmin = async (req, res) => {
   }
 };
 
+// ═════════════════════════════════════════
+//  TEAM MEMBER (DEPARTMENT MANAGER) AUTH
+// ═════════════════════════════════════════
+
+// ── Login Team Member ─────────────────────
+export const loginTeamMember = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    console.log(`🔐 loginTeamMember attempt for email: ${email}`);
+    
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    const teamMember = await TeamMember.findByEmail(email);
+
+    console.log(`📋 TeamMember lookup result:`, {
+      found: !!teamMember,
+      email: teamMember?.email,
+      name: teamMember?.name,
+      sub_department: teamMember?.sub_department,
+      is_active: teamMember?.is_active,
+      hasPassword: !!teamMember?.password,
+    });
+
+    if (!teamMember) {
+      console.log(`❌ Team member not found for email: ${email}`);
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    if (!teamMember.is_active) {
+      console.log(`⚠️ Team member inactive: ${email}`);
+      return res.status(403).json({
+        message: "Your account has been deactivated. Contact your authority chief.",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, teamMember.password);
+    if (!isMatch) {
+      console.log(`❌ Password mismatch for: ${email}`);
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Fetch parent authority's pincode for jurisdiction context
+    const authority = await Authority.findById(teamMember.authority_id);
+    const pincode = authority?.pincode || null;
+
+    const token = generateToken(teamMember.id, "department_manager");
+
+    const responseData = {
+      id: teamMember.id,
+      name: teamMember.name,
+      email: teamMember.email,
+      authority_id: teamMember.authority_id,
+      sub_department: teamMember.sub_department,
+      pincode,
+      role: "department_manager",
+    };
+
+    console.log(`✅ Login successful for: ${email}`, {
+      teamMemberId: teamMember.id,
+      department: teamMember.sub_department,
+      pincode,
+      tokenExists: !!token,
+      responseData,
+    });
+
+    return res.status(200).json({
+      message: "Login successful",
+      token,
+      teamMember: responseData,
+    });
+  } catch (error) {
+    console.error("Login Team Member Error:", error);
+    return res.status(500).json({ message: "Server error during login" });
+  }
+};
+
 // ── Get Current Logged-In User Profile ──────
 export const getMe = async (req, res) => {
   const { id, role } = req.user;
@@ -292,6 +378,8 @@ export const getMe = async (req, res) => {
       userRecord = await User.findById(id);
     } else if (role === "authority") {
       userRecord = await Authority.findById(id);
+    } else if (role === "department_manager") {
+      userRecord = await TeamMember.findById(id);
     } else if (role === "admin") {
       userRecord = await Admin.findById(id);
     } else {

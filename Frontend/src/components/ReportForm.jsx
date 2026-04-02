@@ -8,7 +8,7 @@ import { createReport } from "../services/reportService";
 import Loader from "./Loader";
 import toast from "react-hot-toast";
 import {
-  MapPin, Camera, FileText, X, Upload, Navigation, AlertCircle, CheckCircle, Image as ImageIcon, Building2
+  MapPin, Camera, FileText, X, Upload, Navigation, AlertCircle, CheckCircle, Image as ImageIcon, Building2, ChevronDown
 } from "lucide-react";
 import { colors, fonts } from "../styles/designTokens";
 
@@ -36,6 +36,8 @@ const ReportForm = ({ onSuccess, onClose }) => {
   const [imagePreview, setImagePreview] = useState(null);
   const [location, setLocation] = useState(null);
   const [errors, setErrors] = useState({});
+  const [departmentOverride, setDepartmentOverride] = useState("");
+  const [showDeptOverride, setShowDeptOverride] = useState(false);
 
   const [locating, setLocating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -174,6 +176,11 @@ const ReportForm = ({ onSuccess, onClose }) => {
       formData.append("longitude", location.longitude);
       formData.append("image", imageFile);
 
+      // If user explicitly selected a department override, include it
+      if (departmentOverride) {
+        formData.append("department", departmentOverride);
+      }
+
       await createReport(formData);
 
       toast.dismiss(loadingToastId);
@@ -247,6 +254,49 @@ const ReportForm = ({ onSuccess, onClose }) => {
                     Our Vision AI will instantly analyze your uploaded image upon submission and automatically assign it to the correct local department (e.g., municipalty, PWD) without you having to guess.
                   </p>
                 </div>
+              </div>
+
+              {/* 🏢 Department Override (Collapsible) */}
+              <div className="border border-[var(--c-borderLight)] rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowDeptOverride(!showDeptOverride)}
+                  className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-gray-50 transition-colors"
+                >
+                  <span className="flex items-center gap-2 text-sm font-bold text-[var(--c-charcoal)]">
+                    <Building2 className="w-4 h-4 text-[var(--c-olive)]" />
+                    {departmentOverride ? `Override: ${departmentOverride}` : "Override Department (Optional)"}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${showDeptOverride ? "rotate-180" : ""}`} />
+                </button>
+                {showDeptOverride && (
+                  <div className="px-4 pb-4 pt-2 bg-gray-50/50 flex flex-col gap-2">
+                    <p className="text-xs text-[var(--c-textSecondary)] mb-1">Select a sub-department to override the AI classification, or leave it to the AI.</p>
+                    {[
+                      { value: "", label: "🤖 Let AI Decide" },
+                      { value: "Municipal Corporation", label: "🏛️ Sanitation & Waste (Municipal)" },
+                      { value: "Public Works Department", label: "🛤️ Roads & Highways (PWD)" },
+                      { value: "Electricity Department", label: "⚡ Electricity Distribution" },
+                      { value: "Water Supply Department", label: "💧 Water Supply" },
+                    ].map((dept) => (
+                      <button
+                        key={dept.value}
+                        type="button"
+                        onClick={() => {
+                          setDepartmentOverride(dept.value);
+                          if (!dept.value) setShowDeptOverride(false);
+                        }}
+                        className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                          departmentOverride === dept.value
+                            ? "bg-[var(--c-olive)] text-white shadow-sm"
+                            : "bg-white text-[var(--c-textPrimary)] hover:bg-[var(--c-sage)]/30 border border-[var(--c-borderLight)]"
+                        }`}
+                      >
+                        {dept.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-1.5">

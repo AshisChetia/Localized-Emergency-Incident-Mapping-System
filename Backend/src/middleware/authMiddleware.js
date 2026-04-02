@@ -45,11 +45,14 @@ const authMiddleware = async (req, res, next) => {
       fields = "id, name, email, pincode";
       query  = `SELECT ${fields} FROM users WHERE id = ?`;
     } else if (role === "authority") {
-      fields = "id, name, email, pincode, department, is_approved";
+      fields = "id, name, email, pincode, is_approved";
       query  = `SELECT ${fields} FROM authorities WHERE id = ?`;
     } else if (role === "admin") {
       fields = "id, email";
       query  = `SELECT ${fields} FROM admins WHERE id = ?`;
+    } else if (role === "department_manager") {
+      fields = "tm.id, tm.name, tm.email, tm.sub_department, tm.is_active, tm.authority_id, a.pincode";
+      query  = `SELECT ${fields} FROM team_members tm JOIN authorities a ON tm.authority_id = a.id WHERE tm.id = ?`;
     } else {
       return res.status(403).json({
         message: "Invalid role in token.",

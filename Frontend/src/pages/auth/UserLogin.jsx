@@ -142,6 +142,9 @@ const UserLogin = () => {
           <p className="text-xs text-gray-400">
             Are you a local official? <Link to="/authority/login" className="text-[var(--c-accentGold)] font-bold hover:underline">Go to Authority Portal</Link>
           </p>
+          <p className="text-xs text-gray-400">
+            Department Manager? <Link to="/department-manager/login" className="text-[var(--c-sage)] font-bold hover:underline">Sign in here</Link>
+          </p>
         </div>
 
       </div>

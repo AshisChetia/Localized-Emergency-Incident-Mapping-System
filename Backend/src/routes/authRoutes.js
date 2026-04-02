@@ -6,6 +6,7 @@ import {
   loginUser,
   registerAuthority,
   loginAuthority,
+  loginTeamMember,
   loginAdmin,
   getMe,
   getDepartmentsByPincode,
@@ -20,6 +21,9 @@ router.post("/login", loginUser);
 // Authority Routes
 router.post("/authority/register", registerAuthority);
 router.post("/authority/login", loginAuthority);
+
+// Team Member (Department Manager) Routes
+router.post("/department-manager/login", loginTeamMember);
 
 // Admin Route
 router.post("/admin/login", loginAdmin);

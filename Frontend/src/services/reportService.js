@@ -44,3 +44,11 @@ export const verifyReport = (id) =>
 // DELETE /api/reports/:id/verify
 export const unverifyReport = (id) =>
   api.delete(`/reports/${id}/verify`);
+
+// GET /api/reports/department-manager/assigned → team member's assigned reports
+export const getAssignedReports = () =>
+  api.get("/reports/department-manager/assigned");
+
+// PATCH /api/reports/department-manager/:id/status → team member updates report status
+export const updateReportStatusAsDeptManager = (id, status) =>
+  api.patch(`/reports/department-manager/${id}/status`, { status });

@@ -5,14 +5,15 @@
 import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import StatusBadge from "./StatusBadge";
+import StatusTimeline from "./StatusTimeline";
 import Loader from "./Loader";
 import toast from "react-hot-toast";
-import { updateReportStatus } from "../services/reportService";
+import { updateReportStatus, updateReportStatusAsDeptManager } from "../services/reportService";
 import { colors, fonts } from "../styles/designTokens";
 import {
   MapPin, User, Phone, ArrowLeft, CheckCircle,
   RotateCcw, ExternalLink, ImageOff, Clock, FileText,
-  AlertCircle, ShieldCheck, CalendarDays, Download, FileText as FileTextIcon, BadgeCheck
+  AlertCircle, ShieldCheck, CalendarDays, Download, FileText as FileTextIcon, BadgeCheck, Eye, Wrench, Lock
 } from "lucide-react";
 import { generateDocketPDF } from "../utils/docketGenerator";
 import { formatDate } from "../utils/dateTimeUtils";
@@ -43,15 +44,27 @@ const ReportDetailCard = ({ report, mode = "user", onStatusUpdate, onBack }) => 
     window.open(url, "_blank", "noopener noreferrer");
   };
 
-  const handleStatusToggle = async () => {
-    const newStatus = report.status === "pending" ? "resolved" : "pending";
+  const handleStatusToggle = async (targetStatus = null) => {
+    // Determine new status
+    let newStatus;
+    if (targetStatus) {
+      newStatus = targetStatus;
+    } else {
+      // Legacy toggle for simple pending/resolved
+      newStatus = report.status === "pending" ? "resolved" : "pending";
+    }
+    
     setUpdating(true);
     try {
-      await updateReportStatus(report.id, newStatus);
-      toast.success(`Incident status updated to ${newStatus}`);
+      if (mode === "department_manager") {
+        await updateReportStatusAsDeptManager(report.id, newStatus);
+      } else {
+        await updateReportStatus(report.id, newStatus);
+      }
+      toast.success(`Incident status updated to ${newStatus.replace("_", " ")}`);
       if (onStatusUpdate) onStatusUpdate(report.id, newStatus);
     } catch (error) {
-      toast.error("Failed to update status. Please try again.");
+      toast.error(error?.response?.data?.message || "Failed to update status. Please try again.");
     } finally {
       setUpdating(false);
     }
@@ -111,11 +124,19 @@ const ReportDetailCard = ({ report, mode = "user", onStatusUpdate, onBack }) => 
         </div>
 
         {/* ── Info Grid ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+          {/* Left: Status Timeline */}
+          <div className="bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] rounded-3xl p-6 sm:p-8 shadow-sm h-full">
+            <h4 className="text-sm font-black text-[var(--c-charcoal)] uppercase tracking-wider mb-8 flex items-center gap-2">
+              <Clock className="w-5 h-5 text-[var(--c-olive)]" /> Incident Progress
+            </h4>
+            <StatusTimeline currentStatus={report.status} timestamps={{ reported: report.created_at }} />
+          </div>
           
-          {/* Left: Description & Location */}
+          {/* Right: Data Cards */}
           <div className="flex flex-col gap-6">
-            <div className="bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] rounded-2xl p-6 shadow-sm">
+            <div className="bg-white border border-[var(--c-borderLight)] rounded-2xl p-6 shadow-sm">
               <div className="flex items-center gap-2 text-xs text-[var(--c-textSecondary)] uppercase tracking-widest font-black mb-4">
                 <FileText className="w-4 h-4 text-[var(--c-olive)]" />
                 Detailed Description
@@ -142,58 +163,32 @@ const ReportDetailCard = ({ report, mode = "user", onStatusUpdate, onBack }) => 
                 Pinpoint on Google Maps
               </button>
             </div>
-          </div>
 
-          {/* Right: Reporter & Timestamps */}
-          <div className="flex flex-col gap-6">
-             <div className="bg-white border border-[var(--c-borderLight)] rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center gap-2 text-xs text-[var(--c-textSecondary)] uppercase tracking-widest font-black mb-5">
-                  <User className="w-4 h-4 text-blue-500" /> Reporter Information
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] flex items-center justify-center text-[var(--c-charcoal)] text-xl font-black shadow-sm">
-                    {(report.reporter_name || "U")[0].toUpperCase()}
+            <div className="grid grid-cols-2 gap-4">
+               <div className="bg-white border border-[var(--c-borderLight)] rounded-2xl p-4 shadow-sm flex flex-col justify-center">
+                  <div className="flex items-center gap-2 text-[10px] text-[var(--c-textSecondary)] uppercase tracking-widest font-black mb-2">
+                    <User className="w-3.5 h-3.5 text-blue-500" /> Reporter
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-[var(--c-charcoal)] font-black text-base truncate">
-                      {report.reporter_name || "Unknown User"}
-                    </p>
-                    <div className="flex items-center gap-1.5 text-[var(--c-textSecondary)] text-xs mt-1">
-                      <Phone className="w-3.5 h-3.5" />
-                      <span className="truncate">{report.reporter_number || "Not Provided"}</span>
-                    </div>
+                  <p className="text-[var(--c-charcoal)] font-black text-sm truncate">
+                    {report.reporter_name || "Unknown"}
+                  </p>
+                  <p className="text-[var(--c-textSecondary)] text-[10px] mt-0.5 truncate">{report.reporter_number || "No Phone"}</p>
+               </div>
+
+               <div className="bg-[#FFF8E6] border border-[#F2DCA2] rounded-2xl p-4 shadow-sm flex flex-col justify-center relative overflow-hidden">
+                  <div className="flex items-center gap-2 text-[10px] text-[#9a7a00] uppercase tracking-widest font-black mb-1">
+                    <BadgeCheck className="w-3.5 h-3.5 text-[var(--c-accentGold)]" /> Upvotes
                   </div>
-                </div>
-             </div>
-
-             <div className="bg-white border border-[var(--c-borderLight)] rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center gap-2 text-xs text-[var(--c-textSecondary)] uppercase tracking-widest font-black mb-5">
-                  <Clock className="w-4 h-4 text-[var(--c-accentGold)]" /> Report Logged
-                </div>
-                <div className="flex flex-col gap-1">
-                   <span className="text-[var(--c-textSecondary)] text-[10px] font-bold uppercase">Date</span>
-                   <span className="text-[var(--c-charcoal)] text-sm font-bold flex items-center gap-1.5">
-                     <CalendarDays className="w-3.5 h-3.5" /> {formatDate(report.created_at)}
-                   </span>
-                </div>
-             </div>
-
-             <div className="bg-[#FFF8E6] border border-[#F2DCA2] rounded-2xl p-6 shadow-sm">
-                <div className="flex items-center gap-2 text-xs text-[#9a7a00] uppercase tracking-widest font-black mb-5">
-                  <BadgeCheck className="w-4 h-4 text-[var(--c-accentGold)]" /> Community Upvotes
-                </div>
-                <p className="text-[var(--c-charcoal)] text-2xl font-black">
-                  {report.verification_count || 0}
-                </p>
-                <p className="text-[var(--c-textSecondary)] text-xs font-bold uppercase tracking-wide mt-2">
-                  upvote{(report.verification_count || 0) === 1 ? "" : "s"} from local users
-                </p>
-             </div>
+                  <p className="text-[var(--c-charcoal)] text-xl font-black relative z-10">
+                    {report.verification_count || 0}
+                  </p>
+               </div>
+            </div>
           </div>
         </div>
 
-        {/* ── Authority/User Export Section ── */}
-        {(mode === "authority" || mode === "user") && (
+        {/* ── Authority/DeptManager/User Export Section ── */}
+        {(mode === "authority" || mode === "user" || mode === "department_manager") && (
           <div className="mt-6 p-6 bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] rounded-3xl shadow-sm">
             <div className="flex items-center gap-2 mb-4 text-xs font-bold uppercase tracking-wider text-[var(--c-oliveDark)]">
               <FileTextIcon className="w-4 h-4" />
@@ -230,38 +225,98 @@ const ReportDetailCard = ({ report, mode = "user", onStatusUpdate, onBack }) => 
           </div>
         )}
 
-        {/* ── Authority Action Section ── */}
-        {mode === "authority" && (
-          <div className={`mt-4 p-6 rounded-3xl border flex flex-col sm:flex-row items-center justify-between gap-6 shadow-lg ${
-            report.status === "pending" ? "bg-[#FFF8E6] border-[#F2DCA2]" : "bg-[var(--c-sage)]/30 border-[var(--c-olive)]/20"
-          }`}>
-            <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner ${
-                report.status === "pending" ? "bg-amber-100" : "bg-[var(--c-sage)]"
-              }`}>
-                {report.status === "pending" ? <AlertCircle className="w-6 h-6 text-[var(--c-accentGold)]" /> : <ShieldCheck className="w-6 h-6 text-[var(--c-oliveDark)]" />}
-              </div>
-              <div className="text-center sm:text-left">
-                <p className={`text-base font-black ${report.status === "pending" ? "text-amber-800" : "text-[var(--c-oliveDark)]"}`}>
-                  {report.status === "pending" ? "Awaiting Municipal Action" : "Incident Resolved Successfully"}
-                </p>
-                <p className="text-[var(--c-textSecondary)] text-xs font-bold mt-1 uppercase tracking-tight">
-                  {report.status === "pending" ? "Resolution required for Zone Public Safety" : "Case closed. Incident records archived."}
-                </p>
-              </div>
-            </div>
+        {/* ── Authority / Dept Manager Action Section ── */}
+        {(mode === "authority" || mode === "department_manager") && (
+          <div className="mt-4 p-5 sm:p-8 rounded-3xl border border-[var(--c-borderLight)] bg-white shadow-xl">
+            <h4 className="text-sm font-black text-[var(--c-charcoal)] uppercase tracking-wider mb-6 pb-4 border-b border-gray-100 flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-[var(--c-olive)]" /> Official Action Panel
+            </h4>
+            
+            <div className="flex flex-wrap gap-3">
+              {/* If reported -> Under Review (Authority & DeptMgr) */}
+              {(report.status === "reported" || report.status === "pending") && (
+                <button
+                  onClick={() => handleStatusToggle("under_review")}
+                  disabled={updating || exporting}
+                  className="flex-1 min-w-[180px] flex items-center justify-center gap-2 text-sm font-bold px-6 py-4 rounded-2xl bg-amber-500 text-white hover:bg-amber-600 transition-all shadow hover:-translate-y-0.5"
+                >
+                  {updating ? <Loader variant="inline" size="sm" /> : <><Eye className="w-4 h-4" /> Begin Review</>}
+                </button>
+              )}
 
-            <button
-              onClick={handleStatusToggle}
-              disabled={updating || exporting}
-              className={`min-w-[180px] flex items-center justify-center gap-2 text-sm font-black px-8 py-3.5 rounded-2xl transition-all shadow-md transform hover:-translate-y-1 ${
-                report.status === "pending"
-                  ? "bg-[var(--c-olive)] text-white hover:bg-[var(--c-oliveDark)]"
-                  : "bg-white border-2 border-[var(--c-accentGold)] text-[var(--c-accentGold)] hover:bg-[var(--c-accentGold)] hover:text-white"
-              }`}
-            >
-              {updating ? <Loader variant="inline" size="sm" /> : report.status === "pending" ? <><CheckCircle className="w-4 h-4" /> Mark Resolved</> : <><RotateCcw className="w-4 h-4" /> Reopen Incident</>}
-            </button>
+              {/* If under review -> In Progress (Authority & DeptMgr) */}
+              {report.status === "under_review" && (
+                <>
+                  <button
+                    onClick={() => handleStatusToggle("in_progress")}
+                    disabled={updating || exporting}
+                    className="flex-1 min-w-[180px] flex items-center justify-center gap-2 text-sm font-bold px-6 py-4 rounded-2xl bg-blue-500 text-white hover:bg-blue-600 transition-all shadow hover:-translate-y-0.5"
+                  >
+                    {updating ? <Loader variant="inline" size="sm" /> : <><Wrench className="w-4 h-4" /> Start Field Work</>}
+                  </button>
+                  <button
+                    onClick={() => handleStatusToggle("reported")}
+                    disabled={updating || exporting}
+                    className="flex shrink-0 items-center justify-center gap-2 text-sm font-bold px-6 py-4 rounded-2xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+                  >
+                    <RotateCcw className="w-4 h-4" /> Revert
+                  </button>
+                </>
+              )}
+
+              {/* If in progress -> Resolved (Authority & DeptMgr) */}
+              {report.status === "in_progress" && (
+                <>
+                  <button
+                    onClick={() => handleStatusToggle("resolved")}
+                    disabled={updating || exporting}
+                    className="flex-1 min-w-[180px] flex items-center justify-center gap-2 text-sm font-bold px-6 py-4 rounded-2xl bg-[var(--c-olive)] text-white hover:bg-[var(--c-oliveDark)] transition-all shadow hover:-translate-y-0.5"
+                  >
+                    {updating ? <Loader variant="inline" size="sm" /> : <><CheckCircle className="w-4 h-4" /> Mark Resolved</>}
+                  </button>
+                  <button
+                    onClick={() => handleStatusToggle("under_review")}
+                    disabled={updating || exporting}
+                    className="flex shrink-0 items-center justify-center gap-2 text-sm font-bold px-6 py-4 rounded-2xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition-all"
+                  >
+                    <RotateCcw className="w-4 h-4" /> Revert
+                  </button>
+                </>
+              )}
+              
+              {/* If resolved -> Closed (Authority ONLY) OR Revert to In Progress */}
+              {report.status === "resolved" && (
+                <>
+                  {mode === "authority" && (
+                    <button
+                      onClick={() => handleStatusToggle("closed")}
+                      disabled={updating || exporting}
+                      className="flex-1 min-w-[180px] flex items-center justify-center gap-2 text-sm font-bold px-6 py-4 rounded-2xl bg-gray-800 text-white hover:bg-black transition-all shadow hover:-translate-y-0.5"
+                    >
+                      {updating ? <Loader variant="inline" size="sm" /> : <><Lock className="w-4 h-4" /> Officially Close & Archive</>}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleStatusToggle("in_progress")}
+                    disabled={updating || exporting}
+                    className={`${mode === "authority" ? "flex shrink-0" : "flex-1 min-w-[180px]"} items-center justify-center gap-2 text-sm font-bold px-6 py-4 rounded-2xl bg-white border-2 border-[var(--c-accentGold)] text-[var(--c-accentGold)] hover:bg-[var(--c-accentGold)] hover:text-white transition-all`}
+                  >
+                    <RotateCcw className="w-4 h-4" /> Revert to In Progress
+                  </button>
+                </>
+              )}
+
+              {/* If Closed -> Reopen (Authority & Dept Manager) */}
+              {report.status === "closed" && (
+                <button
+                  onClick={() => handleStatusToggle("in_progress")}
+                  disabled={updating || exporting}
+                  className="w-full flex items-center justify-center gap-2 text-sm font-bold px-6 py-4 rounded-2xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all shadow-sm"
+                >
+                  {updating ? <Loader variant="inline" size="sm" /> : <><RotateCcw className="w-4 h-4" /> Reopen Archived Report</>}
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>

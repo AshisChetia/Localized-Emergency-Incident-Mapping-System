@@ -36,8 +36,11 @@ L.Icon.Default.mergeOptions({
 
 const TABS = [
   { key: "all", label: "All Reports" },
-  { key: "pending", label: "Pending" },
+  { key: "reported", label: "Reported" },
+  { key: "under_review", label: "Under Review" },
+  { key: "in_progress", label: "In Progress" },
   { key: "resolved", label: "Resolved" },
+  { key: "closed", label: "Closed" },
 ];
 
 const SORT_OPTIONS = [
@@ -124,10 +127,13 @@ const AuthorityDashboard = () => {
 
   const stats = {
     total: reports.length,
-    pending: reports.filter((r) => r.status === "pending").length,
+    reported: reports.filter((r) => r.status === "reported").length,
+    underReview: reports.filter((r) => r.status === "under_review").length,
+    inProgress: reports.filter((r) => r.status === "in_progress").length,
     resolved: reports.filter((r) => r.status === "resolved").length,
+    closed: reports.filter((r) => r.status === "closed").length,
     rate: reports.length > 0
-      ? Math.round((reports.filter((r) => r.status === "resolved").length / reports.length) * 100)
+      ? Math.round((reports.filter((r) => r.status === "resolved" || r.status === "closed").length / reports.length) * 100)
       : 0,
   };
 
@@ -195,30 +201,44 @@ const AuthorityDashboard = () => {
     {
       label: "Total Reports",
       value: stats.total,
-      icon: <FileText className="w-5 h-5 text-[var(--c-olive)]" />,
-      bg: "bg-[var(--c-sage)]/20 border-[var(--c-sage)]/40",
-      iconBg: "bg-[var(--c-sage)]/50",
+      icon: <FileText className="w-5 h-5 text-blue-500" />,
+      bg: "bg-blue-50 border-blue-200",
+      iconBg: "bg-blue-100",
     },
     {
-      label: "Pending",
-      value: stats.pending,
-      icon: <Clock className="w-5 h-5 text-[var(--c-accentGold)]" />,
-      bg: "bg-[#FFF8E6] border-[#F2DCA2]",
-      iconBg: "bg-[#FFE8B6]",
+      label: "Reported",
+      value: stats.reported,
+      icon: <Clock className="w-5 h-5 text-gray-500" />,
+      bg: "bg-gray-50 border-gray-200",
+      iconBg: "bg-gray-100",
+    },
+    {
+      label: "Under Review",
+      value: stats.underReview,
+      icon: <Search className="w-5 h-5 text-amber-500" />,
+      bg: "bg-amber-50 border-amber-200",
+      iconBg: "bg-amber-100",
+    },
+    {
+      label: "In Progress",
+      value: stats.inProgress,
+      icon: <RefreshCw className="w-5 h-5 text-blue-500" />,
+      bg: "bg-blue-50 border-blue-200",
+      iconBg: "bg-blue-100",
     },
     {
       label: "Resolved",
       value: stats.resolved,
-      icon: <CheckCircle className="w-5 h-5 text-[var(--c-oliveDark)]" />,
-      bg: "bg-[var(--c-sage)]/30 border-[var(--c-olive)]/20",
-      iconBg: "bg-[var(--c-sage)]/60",
+      icon: <CheckCircle className="w-5 h-5 text-emerald-500" />,
+      bg: "bg-emerald-50 border-emerald-200",
+      iconBg: "bg-emerald-100",
     },
     {
-      label: "Resolution Rate",
-      value: `${stats.rate}%`,
-      icon: <BarChart2 className="w-5 h-5 text-[var(--c-charcoal)]" />,
-      bg: "bg-[var(--c-offWhite)] border-[var(--c-borderLight)]",
-      iconBg: "bg-[var(--c-sage)]/30",
+      label: "Closed",
+      value: stats.closed,
+      icon: <ShieldCheck className="w-5 h-5 text-emerald-700" />,
+      bg: "bg-emerald-100 border-emerald-300",
+      iconBg: "bg-emerald-200",
     },
   ];
 
@@ -294,7 +314,7 @@ const AuthorityDashboard = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
           {statCards.map((card, idx) => (
             <div key={idx} className={`p-5 rounded-3xl border flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow ${card.bg}`}>
               <div className="flex items-center gap-3 mb-4">
@@ -422,7 +442,14 @@ const AuthorityDashboard = () => {
 
                 <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:pb-0">
                   {TABS.map((tab) => {
-                    const count = tab.key === "all" ? stats.total : tab.key === "pending" ? stats.pending : stats.resolved;
+                    let count = 0;
+                    if (tab.key === "all") count = stats.total;
+                    else if (tab.key === "reported") count = stats.reported;
+                    else if (tab.key === "under_review") count = stats.underReview;
+                    else if (tab.key === "in_progress") count = stats.inProgress;
+                    else if (tab.key === "resolved") count = stats.resolved;
+                    else if (tab.key === "closed") count = stats.closed;
+                    
                     return (
                       <button key={tab.key} onClick={() => setActiveTab(tab.key)} className={`text-sm font-bold px-4 py-2.5 rounded-full transition-all flex items-center whitespace-nowrap gap-2 border shadow-sm ${activeTab === tab.key ? "bg-[var(--c-charcoal)] text-white border-[var(--c-charcoal)]" : "bg-white text-[var(--c-textSecondary)] border-[var(--c-borderLight)] hover:text-[var(--c-charcoal)] hover:bg-[var(--c-offWhite)]"}`}>
                         {tab.label}
@@ -514,9 +541,9 @@ const ListReportRow = ({ report, onStatusUpdate, onClick }) => {
         </span>
         <span className="text-[var(--c-textSecondary)] font-medium text-xs hidden sm:block">{formatDate(report.created_at)}</span>
         <span className="bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] px-2.5 py-1 rounded-md text-[var(--c-charcoal)] text-xs font-bold tracking-widest hidden lg:block">{report.pincode}</span>
-        <button onClick={handleToggle} disabled={updating} className={`flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border transition-all disabled:opacity-50 shadow-sm transform hover:-translate-y-0.5 ${report.status === "pending" ? "bg-[var(--c-olive)] border-[var(--c-oliveDark)] text-white hover:bg-[var(--c-oliveDark)]" : "bg-[#FFF8E6] border-[#F2DCA2] text-[var(--c-accentGold)] hover:bg-[#F2DCA2]/30"}`}>
-          {updating ? <span className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" /> : report.status === "pending" ? <CheckCircle className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
-          <span className="hidden sm:inline">{updating ? "Syncing..." : report.status === "pending" ? "Resolve" : "Reopen"}</span>
+        <button className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl border transition-all shadow-sm transform hover:-translate-y-0.5 bg-[var(--c-offWhite)] border-[var(--c-borderLight)] text-[var(--c-charcoal)] hover:bg-[var(--c-sage)]/30">
+          <FileText className="w-4 h-4" />
+          <span className="hidden sm:inline">Details</span>
         </button>
         <ChevronDown className="w-5 h-5 text-gray-400 -rotate-90 group-hover:text-[var(--c-charcoal)] transition-colors hidden sm:block" />
       </div>

@@ -1,0 +1,46 @@
+[
+  {
+    "id": 1,
+    "authority_id": 1,
+    "name": "Manash Tamuli",
+    "email": "manashtamuli@gmail.com",
+    "password": "$2b$10$oa3lCt75o2h4enuzOqx.4uylW6wTjtHkBOI8FowPle17Ld5sCjUZu",
+    "sub_department": "water_supply",
+    "role": "department_manager",
+    "is_active": 1,
+    "created_at": "2026-04-02T01:29:26.000Z"
+  },
+  {
+    "id": 30001,
+    "authority_id": 1,
+    "name": "Anirban Boruah",
+    "email": "anirbanboruah@gmail.com",
+    "password": "$2b$10$/hIydrweKwowR2MNTFgnkuGjolkOLkRJnERVQSBfU1weLpF0/TAzO",
+    "sub_department": "roads",
+    "role": "department_manager",
+    "is_active": 1,
+    "created_at": "2026-04-02T01:43:50.000Z"
+  },
+  {
+    "id": 30002,
+    "authority_id": 1,
+    "name": "Safikul Islam",
+    "email": "safikulislam@gmail.com",
+    "password": "$2b$10$R9flQ2kCPVHTW3pl0D257O9Hv2a3NH9ODz0V8u.327542/bC88/sq",
+    "sub_department": "sanitation",
+    "role": "department_manager",
+    "is_active": 1,
+    "created_at": "2026-04-02T01:48:19.000Z"
+  },
+  {
+    "id": 60002,
+    "authority_id": 1,
+    "name": "Jadumoni Saikia",
+    "email": "jadumonisaikia@gmail.com",
+    "password": "$2b$10$cHuhesy8IalbjjJqZfxAG.N5yBM/3Ttww5gvuR/aHCYJnigJZN42S",
+    "sub_department": "parks",
+    "role": "department_manager",
+    "is_active": 1,
+    "created_at": "2026-04-02T10:40:37.000Z"
+  }
+]

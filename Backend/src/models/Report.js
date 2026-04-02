@@ -32,7 +32,7 @@ const Report = {
       `INSERT INTO reports
         (user_id, description, image_url, latitude, longitude, pincode, department, status)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [userId, description, imageUrl, latitude, longitude, pincode, department, "pending"]
+      [userId, description, imageUrl, latitude, longitude, pincode, department, "reported"]
     );
     return result;
   },

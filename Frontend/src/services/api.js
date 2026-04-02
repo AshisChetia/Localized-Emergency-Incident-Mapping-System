@@ -70,7 +70,7 @@ api.interceptors.response.use(
       // Only redirect if not already on
       // a login/auth related page
       const currentPath = window.location.pathname;
-      const authPaths   = ["/login", "/register", "/authority/login", "/authority/register", "/admin/login", "/"];
+      const authPaths   = ["/login", "/register", "/authority/login", "/authority/register", "/admin/login", "/department-manager/login", "/"];
 
       if (!authPaths.includes(currentPath)) {
         window.location.href = "/";

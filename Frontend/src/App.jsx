@@ -12,6 +12,7 @@ import UserLogin from "./pages/auth/UserLogin";
 import UserRegister from "./pages/auth/UserRegister";
 import AuthorityLogin from "./pages/auth/AuthorityLogin";
 import AuthorityRegister from "./pages/auth/AuthorityRegister";
+import DepartmentManagerLogin from "./pages/auth/DepartmentManagerLogin";
 import AdminLogin from "./pages/auth/AdminLogin";
 
 import Landing from "./pages/Landing";
@@ -20,6 +21,8 @@ import UserProfile from "./pages/user/UserProfile";
 import CommunityFeed from "./pages/user/CommunityFeed";
 import AuthorityDashboard from "./pages/authority/authorityDashboard";
 import AuthorityProfile from "./pages/authority/authorityProfile";
+import TeamManagementPage from "./pages/authority/TeamManagementPage";
+import DepartmentManagerDashboard from "./pages/department-manager/DepartmentManagerDashboard";
 import AdminDashboard from "./pages/admin/adminDashboard";
 
 const App = () => {
@@ -40,6 +43,8 @@ const App = () => {
 
           <Route path="/authority/login" element={<AuthorityLogin />} />
           <Route path="/authority/register" element={<AuthorityRegister />} />
+
+          <Route path="/department-manager/login" element={<DepartmentManagerLogin />} />
 
           <Route path="/admin/login" element={<AdminLogin />} />
 
@@ -63,6 +68,16 @@ const App = () => {
           <Route
             path="/authority/profile"
             element={ <ProtectedRoute allowedRole="authority"><AuthorityProfile /></ProtectedRoute> }
+          />
+
+          <Route
+            path="/authority/team-management"
+            element={ <ProtectedRoute allowedRole="authority"><TeamManagementPage /></ProtectedRoute> }
+          />
+
+          <Route
+            path="/department-manager/dashboard"
+            element={ <ProtectedRoute allowedRole="department_manager"><DepartmentManagerDashboard /></ProtectedRoute> }
           />
 
           <Route

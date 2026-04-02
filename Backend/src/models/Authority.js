@@ -13,12 +13,12 @@ const Authority = {
   //  Submitted with is_approved = false
   //  Super Admin must approve before login
   // ═══════════════════════════════════════
-  create: async ({ name, email, password, pincode, department }) => {
+  create: async ({ name, email, password, pincode }) => {
     const [result] = await db.query(
       `INSERT INTO authorities
-        (name, email, password, pincode, department, is_approved)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [name, email, password, pincode, department, false]
+        (name, email, password, pincode, is_approved)
+       VALUES (?, ?, ?, ?, ?)`,
+      [name, email, password, pincode, false]
     );
     return result;
   },
@@ -46,7 +46,6 @@ const Authority = {
           name,
           email,
           pincode,
-          department,
           is_approved,
           created_at
        FROM authorities
@@ -68,7 +67,6 @@ const Authority = {
           name,
           email,
           pincode,
-          department,
           created_at
        FROM authorities
        WHERE is_approved = true
@@ -89,7 +87,6 @@ const Authority = {
           name,
           email,
           pincode,
-          department,
           created_at
        FROM authorities
        WHERE is_approved = false
@@ -109,7 +106,6 @@ const Authority = {
           name,
           email,
           pincode,
-          department,
           is_approved,
           created_at
        FROM authorities
@@ -213,7 +209,6 @@ const Authority = {
           id,
           name,
           email,
-          department,
           created_at
        FROM authorities
        WHERE pincode = ?
@@ -224,41 +219,36 @@ const Authority = {
   },
 
   // ═══════════════════════════════════════
-  //  FIND BY PINCODE + DEPARTMENT
-  //  Checks if an authority (approved or
-  //  pending) already exists for this
-  //  pincode+department combination.
-  //  Used to enforce max 1 authority per
-  //  department per pincode zone.
-  // ═══════════════════════════════════════
-  findByPincodeAndDepartment: async (pincode, department) => {
+  //  FIND AUTHORITY BY PINCODE
+  //  Checks if an authority already exists
+  //  for a given pincode (approved or pending).
+  //  ═══════════════════════════════════════
+  findByPincodeAndDepartment: async (pincode) => {
     const [rows] = await db.query(
       `SELECT id, name, email, is_approved
        FROM authorities
-       WHERE pincode = ?
-         AND department = ?`,
-      [pincode, department]
+       WHERE pincode = ?`,
+      [pincode]
     );
     return rows[0] || null;
   },
 
   // ═══════════════════════════════════════
-  //  GET APPROVED DEPARTMENTS BY PINCODE
-  //  Returns list of department names that
-  //  have an approved authority for a given
-  //  pincode. Used by report form to show
-  //  citizens which departments are active.
+  //  GET APPROVED AUTHORITY BY PINCODE
+  //  Returns approved authority for a given
+  //  pincode. Used to check if pincode zone
+  //  has an active chief.
   // ═══════════════════════════════════════
   findApprovedDepartmentsByPincode: async (pincode) => {
     const [rows] = await db.query(
-      `SELECT DISTINCT department
+      `SELECT id, name, email
        FROM authorities
        WHERE pincode = ?
          AND is_approved = true
-       ORDER BY department ASC`,
+       LIMIT 1`,
       [pincode]
     );
-    return rows.map((row) => row.department);
+    return rows;
   },
 };
 

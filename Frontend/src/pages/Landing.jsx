@@ -104,7 +104,7 @@ const Landing = () => {
             A hyper-localized reporting engine. We automatically route your civic issues to the exact municipal authority using precision HTML5 Geolocation.
           </motion.p>
 
-          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4 mt-4 w-full sm:w-auto">
+          <motion.div variants={fadeUp} className="flex flex-col sm:flex-row flex-wrap gap-4 mt-4 w-full sm:w-auto justify-center sm:justify-start">
             {isAuthenticated ? (
               <Link to={dashboardLink} className="group relative overflow-hidden bg-[var(--c-olive)] text-white px-8 py-4 rounded-full font-medium text-lg flex items-center justify-center gap-3 transition-transform hover:scale-[1.02]">
                 <span className="relative z-10">Access Dashboard</span>
@@ -118,6 +118,9 @@ const Landing = () => {
                 </Link>
                 <Link to="/authority/register" className="group relative border border-[var(--c-borderLight)] bg-white text-[var(--c-charcoal)] px-8 py-4 rounded-full font-medium text-lg flex items-center justify-center transition-all hover:border-[var(--c-olive)] hover:bg-[var(--c-offWhite)]">
                   Authority Portal
+                </Link>
+                <Link to="/department-manager/login" className="group relative border-2 border-[var(--c-sage)] bg-[var(--c-sage)]/10 text-[var(--c-charcoal)] px-8 py-4 rounded-full font-medium text-lg flex items-center justify-center transition-all hover:border-[var(--c-sage)] hover:bg-[var(--c-sage)]/20">
+                  Team Member Login
                 </Link>
               </>
             )}

@@ -50,6 +50,7 @@ const Navbar = () => {
     if (!user) return "/";
     if (user.role === "user") return "/user/dashboard";
     if (user.role === "authority") return "/authority/dashboard";
+    if (user.role === "department_manager") return "/department-manager/dashboard";
     if (user.role === "admin") return "/admin/dashboard";
     return "/";
   };
@@ -81,7 +82,7 @@ const Navbar = () => {
         </Link>
       );
     }
-    // Otherwise (like for admins without profiles yet), just render it as a div
+    // Otherwise (like for admins and department_managers without profiles yet), just render it as a div
     return <div className={className}>{children}</div>;
   };
 
@@ -125,6 +126,11 @@ const Navbar = () => {
               {user.role === "user" && (
                 <Link to="/user/community" className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${location.pathname === "/user/community" ? "text-[var(--c-olive)]" : "text-[var(--c-textSecondary)] hover:text-[var(--c-olive)]"}`}>
                   <BadgeCheck className="w-4 h-4" /> Community
+                </Link>
+              )}
+              {user.role === "authority" && (
+                <Link to="/authority/team-management" className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${location.pathname === "/authority/team-management" ? "text-[var(--c-olive)]" : "text-[var(--c-textSecondary)] hover:text-[var(--c-olive)]"}`}>
+                  <BadgeCheck className="w-4 h-4" /> Team
                 </Link>
               )}
             </>
@@ -207,6 +213,11 @@ const Navbar = () => {
               {user?.role === "user" && (
                 <Link to="/user/community" onClick={closeMenu} className="flex items-center gap-3 text-lg font-medium text-[var(--c-charcoal)] p-2 hover:bg-white rounded-xl transition-colors">
                   <BadgeCheck className="w-5 h-5 text-[var(--c-accentGold)]" /> Community
+                </Link>
+              )}
+              {user?.role === "authority" && (
+                <Link to="/authority/team-management" onClick={closeMenu} className="flex items-center gap-3 text-lg font-medium text-[var(--c-charcoal)] p-2 hover:bg-white rounded-xl transition-colors">
+                  <BadgeCheck className="w-5 h-5 text-[var(--c-accentGold)]" /> Team
                 </Link>
               )}
 
