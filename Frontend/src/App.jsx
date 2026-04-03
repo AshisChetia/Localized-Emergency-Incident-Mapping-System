@@ -19,9 +19,11 @@ import Landing from "./pages/Landing";
 import UserDashboard from "./pages/user/UserDashboard";
 import UserProfile from "./pages/user/UserProfile";
 import CommunityFeed from "./pages/user/CommunityFeed";
+import UserMessages from "./pages/user/UserMessages";
 import AuthorityDashboard from "./pages/authority/authorityDashboard";
 import AuthorityProfile from "./pages/authority/authorityProfile";
 import TeamManagementPage from "./pages/authority/TeamManagementPage";
+import AuthorityMessages from "./pages/authority/AuthorityMessages";
 import DepartmentManagerDashboard from "./pages/department-manager/DepartmentManagerDashboard";
 import AdminDashboard from "./pages/admin/adminDashboard";
 
@@ -60,6 +62,10 @@ const App = () => {
             path="/user/community"
             element={ <ProtectedRoute allowedRole="user"><CommunityFeed /></ProtectedRoute> }
           />
+          <Route
+            path="/user/messages"
+            element={ <ProtectedRoute allowedRole="user"><UserMessages /></ProtectedRoute> }
+          />
 
           <Route
             path="/authority/dashboard"
@@ -68,6 +74,10 @@ const App = () => {
           <Route
             path="/authority/profile"
             element={ <ProtectedRoute allowedRole="authority"><AuthorityProfile /></ProtectedRoute> }
+          />
+          <Route
+            path="/authority/messages"
+            element={ <ProtectedRoute allowedRole="authority"><AuthorityMessages /></ProtectedRoute> }
           />
 
           <Route

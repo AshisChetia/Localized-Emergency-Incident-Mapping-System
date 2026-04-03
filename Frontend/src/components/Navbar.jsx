@@ -7,7 +7,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { colors, fonts } from "../styles/designTokens";
 import {
-  Menu, X, MapPin, LayoutDashboard, LogOut, BadgeCheck
+  Menu, X, MapPin, LayoutDashboard, LogOut, BadgeCheck, MessageSquare
 } from "lucide-react";
 
 const Navbar = () => {
@@ -124,14 +124,24 @@ const Navbar = () => {
                 <LayoutDashboard className="w-4 h-4" /> Dashboard
               </Link>
               {user.role === "user" && (
-                <Link to="/user/community" className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${location.pathname === "/user/community" ? "text-[var(--c-olive)]" : "text-[var(--c-textSecondary)] hover:text-[var(--c-olive)]"}`}>
-                  <BadgeCheck className="w-4 h-4" /> Community
-                </Link>
+                <>
+                  <Link to="/user/community" className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${location.pathname === "/user/community" ? "text-[var(--c-olive)]" : "text-[var(--c-textSecondary)] hover:text-[var(--c-olive)]"}`}>
+                    <BadgeCheck className="w-4 h-4" /> Community
+                  </Link>
+                  <Link to="/user/messages" className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${location.pathname === "/user/messages" ? "text-[var(--c-olive)]" : "text-[var(--c-textSecondary)] hover:text-[var(--c-olive)]"}`}>
+                    <MessageSquare className="w-4 h-4" /> Complaints
+                  </Link>
+                </>
               )}
               {user.role === "authority" && (
-                <Link to="/authority/team-management" className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${location.pathname === "/authority/team-management" ? "text-[var(--c-olive)]" : "text-[var(--c-textSecondary)] hover:text-[var(--c-olive)]"}`}>
-                  <BadgeCheck className="w-4 h-4" /> Team
-                </Link>
+                <>
+                  <Link to="/authority/team-management" className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${location.pathname === "/authority/team-management" ? "text-[var(--c-olive)]" : "text-[var(--c-textSecondary)] hover:text-[var(--c-olive)]"}`}>
+                    <BadgeCheck className="w-4 h-4" /> Team
+                  </Link>
+                  <Link to="/authority/messages" className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${location.pathname === "/authority/messages" ? "text-[var(--c-olive)]" : "text-[var(--c-textSecondary)] hover:text-[var(--c-olive)]"}`}>
+                    <MessageSquare className="w-4 h-4" /> Queries
+                  </Link>
+                </>
               )}
             </>
           )}
@@ -211,14 +221,24 @@ const Navbar = () => {
                 <LayoutDashboard className="w-5 h-5 text-[var(--c-olive)]" /> Dashboard
               </Link>
               {user?.role === "user" && (
-                <Link to="/user/community" onClick={closeMenu} className="flex items-center gap-3 text-lg font-medium text-[var(--c-charcoal)] p-2 hover:bg-white rounded-xl transition-colors">
-                  <BadgeCheck className="w-5 h-5 text-[var(--c-accentGold)]" /> Community
-                </Link>
+                <>
+                  <Link to="/user/community" onClick={closeMenu} className="flex items-center gap-3 text-lg font-medium text-[var(--c-charcoal)] p-2 hover:bg-white rounded-xl transition-colors">
+                    <BadgeCheck className="w-5 h-5 text-[var(--c-accentGold)]" /> Community
+                  </Link>
+                  <Link to="/user/messages" onClick={closeMenu} className="flex items-center gap-3 text-lg font-medium text-[var(--c-charcoal)] p-2 hover:bg-white rounded-xl transition-colors">
+                    <MessageSquare className="w-5 h-5 text-[var(--c-olive)]" /> Complaints
+                  </Link>
+                </>
               )}
               {user?.role === "authority" && (
-                <Link to="/authority/team-management" onClick={closeMenu} className="flex items-center gap-3 text-lg font-medium text-[var(--c-charcoal)] p-2 hover:bg-white rounded-xl transition-colors">
-                  <BadgeCheck className="w-5 h-5 text-[var(--c-accentGold)]" /> Team
-                </Link>
+                <>
+                  <Link to="/authority/team-management" onClick={closeMenu} className="flex items-center gap-3 text-lg font-medium text-[var(--c-charcoal)] p-2 hover:bg-white rounded-xl transition-colors">
+                    <BadgeCheck className="w-5 h-5 text-[var(--c-accentGold)]" /> Team
+                  </Link>
+                  <Link to="/authority/messages" onClick={closeMenu} className="flex items-center gap-3 text-lg font-medium text-[var(--c-charcoal)] p-2 hover:bg-white rounded-xl transition-colors">
+                    <MessageSquare className="w-5 h-5 text-[var(--c-olive)]" /> Queries
+                  </Link>
+                </>
               )}
 
               <div className="h-px bg-[var(--c-borderLight)] my-2"></div>

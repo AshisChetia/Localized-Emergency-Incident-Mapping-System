@@ -118,13 +118,6 @@ export const AuthProvider = ({ children }) => {
   //  login(data.token, data.user)
   // ═══════════════════════════════════════
   const login = (token, userData) => {
-    // ── Debug logging ────────────────────
-    console.log("Login called with:", {
-      token: token ? "present" : "missing",
-      userData,
-      userRole: userData?.role,
-    });
-    
     // ── Save token to localStorage ───────
     saveToken(token, userData.role);
 
@@ -132,11 +125,6 @@ export const AuthProvider = ({ children }) => {
     setUser({
       ...userData,
       token,
-    });
-    
-    console.log("User context updated:", {
-      ...userData,
-      token: token ? "present" : "missing",
     });
   };
 

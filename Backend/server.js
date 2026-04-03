@@ -23,10 +23,13 @@ app.use(cors({
 
 app.use(express.json());
 
+import messageRoutes from "./src/routes/messageRoutes.js";
+
 app.use("/api/auth", authRoutes);
 app.use("/api/reports", reportRoutes);
 app.use("/api/authority", authorityRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/messages", messageRoutes);
 
 // Health check route
 app.get('/', (req, res) => {

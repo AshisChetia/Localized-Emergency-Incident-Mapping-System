@@ -63,6 +63,7 @@ const ReportDetailCard = ({ report, mode = "user", onStatusUpdate, onBack }) => 
       }
       toast.success(`Incident status updated to ${newStatus.replace("_", " ")}`);
       if (onStatusUpdate) onStatusUpdate(report.id, newStatus);
+      
     } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to update status. Please try again.");
     } finally {

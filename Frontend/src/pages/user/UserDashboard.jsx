@@ -11,6 +11,7 @@ import {
 import ReportCard from "../../components/ReportCard";
 import ReportForm from "../../components/ReportForm";
 import Loader from "../../components/Loader";
+import StatusTimeline from "../../components/StatusTimeline";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { colors, fonts } from "../../styles/designTokens";
@@ -201,6 +202,13 @@ const UserDashboard = () => {
                     <p className="text-[var(--c-charcoal)] text-[15px] leading-relaxed whitespace-pre-wrap font-medium">
                       {selectedReport.description}
                     </p>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-xs font-semibold text-[var(--c-textSecondary)] uppercase tracking-widest mb-3">Incident Progress</h3>
+                    <div className="bg-[var(--c-offWhite)] rounded-2xl p-6 border border-[var(--c-borderLight)]">
+                      <StatusTimeline currentStatus={selectedReport.status} timestamps={{ reported: selectedReport.created_at, under_review: selectedReport.updated_at, in_progress: selectedReport.updated_at, resolved: selectedReport.updated_at, closed: selectedReport.updated_at }} />
+                    </div>
                   </div>
 
                   {selectedReport.department && (

@@ -5,6 +5,7 @@ import Report from "../models/Report.js";
 import Authority from "../models/Authority.js";
 import ReportVerification from "../models/ReportVerification.js";
 import { GoogleGenAI } from "@google/genai";
+import { sendReportConfirmation, sendStatusUpdate } from "../utils/emailService.js";
 
 const uploadToCloudinary = (fileBuffer, folderName) => {
   return new Promise((resolve, reject) => {
@@ -218,7 +219,13 @@ const createReport = async (req, res) => {
       }
     }
 
+
     const newReport = await Report.findById(result.insertId);
+
+    // ── 5. SEND CONFIRMATION EMAIL (Asynchronous) ──
+    if (req.user?.email) {
+      sendReportConfirmation(req.user.email, newReport);
+    }
 
     return res.status(201).json({
       message: `Report routed successfully to your home zone: ${routingPincode}`,
@@ -364,6 +371,11 @@ const updateReportStatus = async (req, res) => {
     await Report.updateStatus(id, status);
     const updatedReport = await Report.findById(id);
     const normalized = normalizeReport(updatedReport);
+
+    // ── 5. SEND STATUS UPDATE EMAIL (Asynchronous) ──
+    if (updatedReport?.reporter_email) {
+      sendStatusUpdate(updatedReport.reporter_email, updatedReport, status);
+    }
 
     return res.status(200).json({ message: `Report successfully marked as '${status}'`, report: normalized });
   } catch (error) {

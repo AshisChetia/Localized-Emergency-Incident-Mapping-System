@@ -47,14 +47,7 @@ const ProtectedRoute = ({ children, allowedRole }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
-  // Debug logging
-  console.log(`ProtectedRoute check for ${allowedRole}:`, {
-    loading,
-    userExists: !!user,
-    userRole: user?.role,
-    userNeedsLogin: !user,
-    wrongRole: user && user.role !== allowedRole,
-  });
+  // Removed Debug logging
 
   // ── Still checking auth state ───────────
   // Show fullscreen loader while AuthContext
@@ -70,7 +63,6 @@ const ProtectedRoute = ({ children, allowedRole }) => {
   // redirect back after login if needed.
   if (!user) {
     const loginPath = roleLoginPath[allowedRole] || "/login";
-    console.log(`Redirecting to login: ${loginPath}`);
     return (
       <Navigate
         to={loginPath}
@@ -86,12 +78,10 @@ const ProtectedRoute = ({ children, allowedRole }) => {
   // /authority/dashboard
   if (user.role !== allowedRole) {
     const correctDashboard = roleDashboardPath[user.role] || "/";
-    console.log(`Role mismatch: user is ${user.role}, route requires ${allowedRole}. Redirecting to ${correctDashboard}`);
     return <Navigate to={correctDashboard} replace />;
   }
 
   // ── Authorized → render the page ───────
-  console.log(`ProtectedRoute authorized for ${allowedRole}`);
   return children;
 };
 
