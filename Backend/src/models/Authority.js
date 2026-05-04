@@ -154,6 +154,18 @@ const Authority = {
   },
 
   // ═══════════════════════════════════════
+  //  CHECK IF PINCODE EXISTS
+  //  Ensures only one authority per pincode
+  // ═══════════════════════════════════════
+  pincodeExists: async (pincode) => {
+    const [rows] = await db.query(
+      `SELECT id FROM authorities WHERE pincode = ?`,
+      [pincode]
+    );
+    return rows.length > 0;
+  },
+
+  // ═══════════════════════════════════════
   //  COUNT ALL APPROVED AUTHORITIES
   //  Used in Super Admin dashboard stats
   // ═══════════════════════════════════════

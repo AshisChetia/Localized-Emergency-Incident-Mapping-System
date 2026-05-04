@@ -21,6 +21,12 @@ export const getMessagesByReportId = async (req, res) => {
     }
 
     const messages = await ReportMessage.findByReportId(reportId);
+
+    // After fetching messages, mark incoming ones as read for the current user
+    // (If authority is viewing, mark 'user' messages as read, and vice versa)
+    const readerType = role === "user" ? "user" : "authority";
+    await ReportMessage.markAsRead(reportId, readerType);
+
     return res.status(200).json({ messages });
   } catch (error) {
     console.error("Fetch Messages Error:", error);

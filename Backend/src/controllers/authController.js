@@ -10,7 +10,6 @@ import User from "../models/User.js";
 import Authority from "../models/Authority.js";
 import Admin from "../models/Admin.js";
 import TeamMember from "../models/TeamMember.js";
-import { isValidDepartmentCombination } from "../utils/departments.js";
 
 // ─────────────────────────────────────────
 // HELPER: Generate JWT Token
@@ -166,6 +165,13 @@ export const registerAuthority = async (req, res) => {
     if (authorityExists) {
       return res.status(409).json({
         message: "An authority with this email already exists or has a pending request",
+      });
+    }
+
+    const pincodeExists = await Authority.pincodeExists(normalizedPincode);
+    if (pincodeExists) {
+      return res.status(409).json({
+        message: "An authority for this pincode already exists or has a pending request. Only one authority (Municipality) is allowed per pincode.",
       });
     }
 

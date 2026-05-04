@@ -34,10 +34,10 @@ const TeamManagementPage = () => {
   };
 
   const SUB_DEPARTMENTS = [
+    { id: "pwd", label: "Public Works Department (PWD)" },
     { id: "water_supply", label: "Water Supply" },
-    { id: "roads", label: "Roads & Highways" },
-    { id: "sanitation", label: "Sanitation & Waste" },
-    { id: "parks", label: "Parks & Public Gardens" },
+    { id: "electricity", label: "Electricity Distribution" },
+    { id: "garbage_management", label: "Garbage Management" },
   ];
 
   // Load existing team members
@@ -87,7 +87,7 @@ const TeamManagementPage = () => {
         await authorityService.createTeamMember(formData);
         toast.success("Team member created!");
       }
-      setFormData({ name: "", email: "", password: "", sub_department: "water_supply" });
+      setFormData({ name: "", email: "", password: "", sub_department: "pwd" });
       setEditingId(null);
       setShowForm(false);
       loadTeamMembers();
@@ -125,7 +125,7 @@ const TeamManagementPage = () => {
 
   // Cancel form
   const handleCancel = () => {
-    setFormData({ name: "", email: "", password: "", sub_department: "water_supply" });
+    setFormData({ name: "", email: "", password: "", sub_department: "pwd" });
     setEditingId(null);
     setShowForm(false);
   };

@@ -4,9 +4,20 @@ const ReportMessage = {
   // Add a new message
   create: async ({ reportId, senderType, senderId, message }) => {
     const [result] = await db.query(
-      `INSERT INTO report_messages (report_id, sender_type, sender_id, message)
-       VALUES (?, ?, ?, ?)`,
-      [reportId, senderType, senderId, message]
+      `INSERT INTO report_messages (report_id, sender_type, sender_id, message, is_read)
+       VALUES (?, ?, ?, ?, ?)`,
+      [reportId, senderType, senderId, message, 0]
+    );
+    return result;
+  },
+
+  // Mark messages sent by the other party as read
+  markAsRead: async (reportId, readerType) => {
+    const [result] = await db.query(
+      `UPDATE report_messages 
+       SET is_read = 1 
+       WHERE report_id = ? AND sender_type != ? AND is_read = 0`,
+      [reportId, readerType]
     );
     return result;
   },
@@ -21,6 +32,7 @@ const ReportMessage = {
           m.sender_type,
           m.sender_id,
           m.message,
+          m.is_read,
           m.created_at,
           u.name AS user_name,
           a.name AS authority_name

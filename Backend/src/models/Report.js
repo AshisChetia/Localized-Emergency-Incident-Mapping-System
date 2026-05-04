@@ -75,29 +75,39 @@ const Report = {
   //  Returns citizen's own report history
   //  ordered by newest first
   // ═══════════════════════════════════════
-  findByUserId: async (userId) => {
+   findByUserId: async (userId) => {
     const [rows] = await db.query(
       `SELECT
-          id,
-          user_id,
-          description,
-          image_url,
-          latitude,
-          longitude,
-          pincode,
-          department,
-          status,
-          created_at,
+          r.id,
+          r.user_id,
+          r.description,
+          r.image_url,
+          r.latitude,
+          r.longitude,
+          r.pincode,
+          r.department,
+          r.status,
+          r.created_at,
           COALESCE(rv.verification_count, 0) AS verification_count,
-          0 AS is_verified_by_me
+          0 AS is_verified_by_me,
+          COALESCE(m.latest_at, r.created_at) AS latest_message_at,
+          COALESCE(m.unread_cnt, 0) AS unread_count
        FROM reports r
        LEFT JOIN (
          SELECT report_id, COUNT(*) AS verification_count
          FROM report_verifications
          GROUP BY report_id
        ) rv ON rv.report_id = r.id
-       WHERE user_id = ?
-       ORDER BY created_at DESC`,
+       LEFT JOIN (
+         SELECT 
+           report_id, 
+           MAX(created_at) AS latest_at,
+           COUNT(CASE WHEN sender_type = 'authority' AND is_read = 0 THEN 1 END) AS unread_cnt
+         FROM report_messages
+         GROUP BY report_id
+       ) m ON m.report_id = r.id
+       WHERE r.user_id = ?
+       ORDER BY latest_message_at DESC`,
       [userId]
     );
     return rows;
@@ -122,7 +132,9 @@ const Report = {
           r.department,
           r.status,
           r.created_at,
-          ${buildVerificationSelect(viewerId, true)}
+          ${buildVerificationSelect(viewerId, true)},
+          COALESCE(m.latest_at, r.created_at) AS latest_message_at,
+          COALESCE(m.unread_cnt, 0) AS unread_count
        FROM reports r
        JOIN users u ON r.user_id = u.id
        LEFT JOIN (
@@ -130,6 +142,14 @@ const Report = {
          FROM report_verifications
          GROUP BY report_id
        ) rv ON rv.report_id = r.id
+       LEFT JOIN (
+         SELECT 
+           report_id, 
+           MAX(created_at) AS latest_at,
+           COUNT(CASE WHEN sender_type = 'user' AND is_read = 0 THEN 1 END) AS unread_cnt
+         FROM report_messages
+         GROUP BY report_id
+       ) m ON m.report_id = r.id
        ${viewerId ? `LEFT JOIN report_verifications uv ON uv.report_id = r.id AND uv.user_id = ?` : ""}
        WHERE r.pincode = ?`;
     const params = viewerId ? [viewerId, pincode] : [pincode];
@@ -140,8 +160,7 @@ const Report = {
     }
 
     query += ` ORDER BY
-          CASE WHEN r.status = 'pending' THEN 0 ELSE 1 END,
-          r.created_at DESC`;
+                 latest_message_at DESC`;
 
     const [rows] = await db.query(query, params);
     return rows;

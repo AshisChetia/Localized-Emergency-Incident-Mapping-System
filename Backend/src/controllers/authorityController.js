@@ -113,10 +113,10 @@ export const createTeamMember = async (req, res) => {
         }
 
         // ── Valid sub-departments ───────────
-        const validDepts = ["water_supply", "roads", "sanitation", "parks"];
+        const validDepts = ["pwd", "water_supply", "electricity", "garbage_management"];
         if (!validDepts.includes(sub_department)) {
             return res.status(400).json({
-                message: "Invalid sub-department selected",
+                message: "Invalid sub-department selected. Must be one of: PWD, Water Supply, Electricity, or Garbage Management",
             });
         }
 

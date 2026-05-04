@@ -26,6 +26,19 @@ export const connectDB = async () => {
   try {
     const connection = await pool.getConnection();
     console.log('✅ TiDB Database Connected Successfully');
+
+    // ── AUTO-MIGRATION: Ensure is_read column exists ──
+    try {
+      await connection.query('ALTER TABLE report_messages ADD COLUMN is_read TINYINT(1) DEFAULT 0');
+      console.log('📦 Migration: added is_read column to report_messages table');
+    } catch (migErr) {
+      // Silence duplicate column errors (1060 or ER_DUP_FIELDNAME)
+      const isDuplicate = migErr.errno === 1060 || migErr.code === 'ER_DUP_FIELDNAME' || migErr.message.includes('Duplicate column');
+      if (!isDuplicate) {
+        console.warn('⚠️ Migration warning:', migErr.message);
+      }
+    }
+
     connection.release();
   } catch (error) {
     console.error('❌ TiDB Connection Failed:', error.message);

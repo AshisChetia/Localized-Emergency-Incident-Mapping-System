@@ -251,7 +251,7 @@ const ReportForm = ({ onSuccess, onClose }) => {
                     </span>
                   </h4>
                   <p className="text-xs font-medium text-[var(--c-textSecondary)] leading-relaxed">
-                    Our Vision AI will instantly analyze your uploaded image upon submission and automatically assign it to the correct local department (e.g., municipalty, PWD) without you having to guess.
+                    Our Vision AI will instantly analyze your uploaded image upon submission and automatically assign it to the correct local department (e.g., PWD, Water Supply) without you having to guess.
                   </p>
                 </div>
               </div>
@@ -274,10 +274,10 @@ const ReportForm = ({ onSuccess, onClose }) => {
                     <p className="text-xs text-[var(--c-textSecondary)] mb-1">Select a sub-department to override the AI classification, or leave it to the AI.</p>
                     {[
                       { value: "", label: "🤖 Let AI Decide" },
-                      { value: "Municipal Corporation", label: "🏛️ Sanitation & Waste (Municipal)" },
                       { value: "Public Works Department", label: "🛤️ Roads & Highways (PWD)" },
-                      { value: "Electricity Department", label: "⚡ Electricity Distribution" },
                       { value: "Water Supply Department", label: "💧 Water Supply" },
+                      { value: "Electricity Department", label: "⚡ Electricity Distribution" },
+                      { value: "Garbage Management", label: "♻️ Garbage Management" },
                     ].map((dept) => (
                       <button
                         key={dept.value}

@@ -1,7 +1,11 @@
 import nodemailer from 'nodemailer';
 
+// Create transporter with explicit configuration for better reliability
 const transporter = nodemailer.createTransport({
   service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -13,12 +17,17 @@ const transporter = nodemailer.createTransport({
  */
 export const sendReportConfirmation = async (email, report) => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn("Email credentials missing. Skipping confirmation email.");
+    console.warn("⚠️ Email credentials missing in .env. Skipping confirmation email.");
+    return;
+  }
+
+  if (!report) {
+    console.error("❌ Cannot send confirmation email: Report data is missing.");
     return;
   }
 
   const mailOptions = {
-    from: `"LEIMS Official" <${process.env.EMAIL_USER}>`,
+    from: `LEIMS <no-reply@leims.com>`,
     to: email,
     subject: `Incident Report Received - #${report.id}`,
     html: `
@@ -41,7 +50,7 @@ export const sendReportConfirmation = async (email, report) => {
           
           <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eeeeee; font-size: 14px; color: #777777;">
             <p style="margin: 0;">Regards,<br><strong>LEIMS Official Team</strong></p>
-            <p style="margin: 5px 0 0 0;">This is an automated message, please do not reply.</p>
+            <p style="margin: 5px 0 0 0;">This is an automated message, please do not reply to this email.</p>
           </div>
         </div>
       </div>
@@ -49,10 +58,14 @@ export const sendReportConfirmation = async (email, report) => {
   };
 
   try {
+    console.log(`📧 Attempting to send confirmation email to: ${email}...`);
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Confirmation email sent to ${email}`);
+    console.log(`✅ Confirmation email successfully sent to ${email}`);
   } catch (error) {
-    console.error('❌ Error sending confirmation email:', error);
+    console.error('❌ Error sending confirmation email:', error.message);
+    if (error.code === 'EAUTH') {
+      console.error('🔑 Authentication failed. Check your EMAIL_USER and EMAIL_PASS in .env');
+    }
   }
 };
 
@@ -61,12 +74,17 @@ export const sendReportConfirmation = async (email, report) => {
  */
 export const sendStatusUpdate = async (email, report, newStatus) => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    console.warn("Email credentials missing. Skipping status update email.");
+    console.warn("⚠️ Email credentials missing in .env. Skipping status update email.");
+    return;
+  }
+
+  if (!report) {
+    console.error("❌ Cannot send status update email: Report data is missing.");
     return;
   }
 
   const mailOptions = {
-    from: `"LEIMS Official" <${process.env.EMAIL_USER}>`,
+    from: `LEIMS <no-reply@leims.com>`,
     to: email,
     subject: `Status Update: Incident Report #${report.id}`,
     html: `
@@ -81,6 +99,7 @@ export const sendStatusUpdate = async (email, report, newStatus) => {
           <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #d4af37;">
             <p style="margin: 0 0 10px 0;"><strong>Report ID:</strong> <span style="color: #1a1a1a;">#${report.id}</span></p>
             <p style="margin: 0 0 10px 0;"><strong>Description:</strong> ${report.description}</p>
+            <p style="margin: 0 0 10px 0;"><strong>Department:</strong> ${report.department}</p>
             <p style="margin: 0;"><strong>New Status:</strong> <span style="text-transform: uppercase; font-weight: bold; color: #2c5e1a;">${newStatus.replace('_', ' ')}</span></p>
           </div>
           
@@ -88,7 +107,7 @@ export const sendStatusUpdate = async (email, report, newStatus) => {
           
           <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eeeeee; font-size: 14px; color: #777777;">
             <p style="margin: 0;">Regards,<br><strong>LEIMS Official Team</strong></p>
-            <p style="margin: 5px 0 0 0;">This is an automated message, please do not reply.</p>
+            <p style="margin: 5px 0 0 0;">This is an automated message, please do not reply to this email.</p>
           </div>
         </div>
       </div>
@@ -96,9 +115,14 @@ export const sendStatusUpdate = async (email, report, newStatus) => {
   };
 
   try {
+    console.log(`📧 Attempting to send status update email to: ${email}...`);
     await transporter.sendMail(mailOptions);
-    console.log(`✅ Status update email sent to ${email} (New Status: ${newStatus})`);
+    console.log(`✅ Status update email successfully sent to ${email} (New Status: ${newStatus})`);
   } catch (error) {
-    console.error('❌ Error sending status update email:', error);
+    console.error('❌ Error sending status update email:', error.message);
+    if (error.code === 'EAUTH') {
+      console.error('🔑 Authentication failed. Check your EMAIL_USER and EMAIL_PASS in .env');
+    }
   }
 };
+

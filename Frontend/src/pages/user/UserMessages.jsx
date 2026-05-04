@@ -66,7 +66,7 @@ const UserMessages = () => {
       }
     };
     fetchMessages();
-  }, [selectedReport]);
+  }, [selectedReport?.id]); // Use ID as dependency instead of whole object
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -75,7 +75,10 @@ const UserMessages = () => {
     try {
       setSending(true);
       const res = await sendMessage(selectedReport.id, { message: newMessage });
-      setMessages([...messages, res.data.newMessage]);
+      setMessages(prev => {
+        const exists = prev.some(m => m.id === res.data.newMessage.id);
+        return exists ? prev : [...prev, res.data.newMessage];
+      });
       setNewMessage("");
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to send message");
@@ -120,14 +123,28 @@ const UserMessages = () => {
               reports.map(report => (
                 <button
                   key={report.id}
-                  onClick={() => setSelectedReport(report)}
-                  className={`flex flex-col text-left p-4 rounded-2xl transition-all border ${
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (selectedReport?.id === report.id) return;
+                    setSelectedReport(report);
+                    // Clear messages immediately or keep them for smoother transition
+                    // setMessages([]); // Optional: keep old messages visible for "WhatsApp" feel
+                    // Optimistically clear unread count for this report in UI
+                    setReports(prev => prev.map(r => r.id === report.id ? { ...r, unread_count: 0 } : r));
+                  }}
+                  className={`flex flex-col text-left p-4 rounded-2xl transition-all border relative ${
                     selectedReport?.id === report.id
                       ? "bg-[var(--c-sage)]/20 border-[var(--c-sage)] shadow-sm"
                       : "bg-white border-transparent hover:bg-[var(--c-offWhite)]"
                   }`}
                 >
-                  <div className="flex justify-between items-start mb-1">
+                  {/* WhatsApp-style Unread Dot */}
+                  {report.unread_count > 0 && selectedReport?.id !== report.id && (
+                    <span className="absolute top-4 right-4 w-2.5 h-2.5 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)] animate-pulse" title="New messages from Authority" />
+                  )}
+
+                  <div className="flex justify-between items-start mb-1 pr-4">
                     <span className="text-xs font-bold text-[var(--c-olive)] uppercase tracking-wider">Report #{report.id}</span>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                         report.status === "resolved" ? "bg-[var(--c-sage)] text-[var(--c-oliveDark)]" : "bg-gray-100 text-gray-600"
@@ -135,9 +152,11 @@ const UserMessages = () => {
                       {report.status}
                     </span>
                   </div>
-                  <p className="text-sm font-semibold text-[var(--c-charcoal)] line-clamp-1">{report.description}</p>
-                  <span className="text-xs text-[var(--c-textSecondary)] mt-1.5 flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> {formatDateShort(report.created_at)}
+                  <p className={`text-sm ${report.unread_count > 0 ? "font-bold text-[var(--c-charcoal)]" : "font-semibold text-gray-600"} line-clamp-1`}>
+                    {report.description}
+                  </p>
+                  <span className="text-[10px] text-[var(--c-textSecondary)] mt-1.5 flex items-center gap-1 font-medium">
+                    <Clock className="w-3 h-3" /> {formatDateShort(report.latest_message_at || report.created_at)}
                   </span>
                 </button>
               ))
@@ -166,37 +185,40 @@ const UserMessages = () => {
                 </div>
               </div>
 
-              {/* Chat Messages */}
-              <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4">
-                {loadingMessages ? (
-                  <div className="flex justify-center p-8"><Loader size="md" /></div>
-                ) : messages.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full text-[var(--c-textSecondary)]">
-                    <AlertCircle className="w-8 h-8 opacity-40 mb-2" />
-                    <p className="text-sm">No messages yet. Send a query to the authority.</p>
-                  </div>
-                ) : (
-                  messages.map((msg, idx) => {
-                    const isCitizen = msg.sender_type === "user";
-                    return (
-                      <div key={msg.id || idx} className={`flex flex-col max-w-[80%] ${isCitizen ? "self-end items-end" : "self-start items-start"}`}>
-                        <span className="text-[10px] font-bold text-[var(--c-textSecondary)] mb-1 px-1">
-                          {isCitizen ? "You" : msg.sender_name}
-                        </span>
-                        <div className={`p-4 rounded-2xl ${
-                          isCitizen 
-                            ? "bg-[var(--c-oliveDark)] text-white rounded-tr-sm shadow-sm" 
-                            : "bg-[var(--c-offWhite)] text-[var(--c-charcoal)] border border-[var(--c-borderLight)] rounded-tl-sm shadow-sm"
-                        }`}>
-                          <p className="text-sm leading-relaxed">{msg.message}</p>
+                <div className={`flex-1 overflow-y-auto p-6 flex flex-col gap-4 relative transition-opacity duration-300 ${loadingMessages ? "opacity-60" : "opacity-100"}`}>
+                  {loadingMessages && (
+                    <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/20 backdrop-blur-[1px]">
+                      <Loader size="md" />
+                    </div>
+                  )}
+
+                  {messages.length === 0 && !loadingMessages ? (
+                    <div className="flex flex-col items-center justify-center h-full text-[var(--c-textSecondary)]">
+                      <AlertCircle className="w-8 h-8 opacity-40 mb-2" />
+                      <p className="text-sm">No messages yet. Send a query to the authority.</p>
+                    </div>
+                  ) : (
+                    messages.map((msg, idx) => {
+                      const isCitizen = msg.sender_type === "user";
+                      return (
+                        <div key={msg.id || idx} className={`flex flex-col max-w-[80%] ${isCitizen ? "self-end items-end" : "self-start items-start"}`}>
+                          <span className="text-[10px] font-bold text-[var(--c-textSecondary)] mb-1 px-1">
+                            {isCitizen ? "You" : msg.sender_name}
+                          </span>
+                          <div className={`p-4 rounded-2xl ${
+                            isCitizen 
+                              ? "bg-[var(--c-oliveDark)] text-white rounded-tr-sm shadow-sm" 
+                              : "bg-[var(--c-offWhite)] text-[var(--c-charcoal)] border border-[var(--c-borderLight)] rounded-tl-sm shadow-sm"
+                          }`}>
+                            <p className="text-sm leading-relaxed">{msg.message}</p>
+                          </div>
+                          <span className="text-[10px] text-gray-400 mt-1 px-1">{formatDateShort(msg.created_at)}</span>
                         </div>
-                        <span className="text-[10px] text-gray-400 mt-1 px-1">{formatDateShort(msg.created_at)}</span>
-                      </div>
-                    );
-                  })
-                )}
-                <div ref={messagesEndRef} />
-              </div>
+                      );
+                    })
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
 
               {/* Chat Input */}
               <form onSubmit={handleSendMessage} className="p-4 bg-white border-t border-[var(--c-borderLight)] shrink-0 flex gap-3 items-end">

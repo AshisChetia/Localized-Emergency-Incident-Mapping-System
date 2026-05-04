@@ -111,12 +111,12 @@ const createReport = async (req, res) => {
     }
 
     // ── 2. DEPARTMENT ROUTING ──
-    let assignedDepartment = "Municipal Corporation"; // Safe system default
+    let assignedDepartment = "Garbage Management"; // Default to Garbage/Civic if unsure
     const MASTER_DEPARTMENTS = [
-      "Municipal Corporation",
       "Public Works Department",
+      "Water Supply Department",
       "Electricity Department",
-      "Water Supply Department"
+      "Garbage Management"
     ];
 
     // ── 2a. CHECK IF USER PROVIDED A MANUAL DEPARTMENT OVERRIDE ──
@@ -135,12 +135,12 @@ const createReport = async (req, res) => {
         Citizen's Description: "${description}"
         
         The description contains critical context that might not be perfectly clear from the image alone. You must weigh BOTH the visual evidence and the text to accurately classify this incident into EXACTLY ONE of the following 4 departments:
-        - Municipal Corporation (civic issues, garbage, stray animals, public nuisances)
         - Public Works Department (road damage, potholes, infrastructure failure, structural collapse)
-        - Electricity Department (fallen power lines, broken streetlights, electrical hazards)
         - Water Supply Department (burst pipes, severe flooding, sewage leaks, drainage issues)
+        - Electricity Department (fallen power lines, broken streetlights, electrical hazards)
+        - Garbage Management (garbage piles, waste disposal, sanitation issues, public nuisances)
         
-        Even if the image is confusing, rely on the description to make your decision. MUST pick the single closest matching department from these 4. NEVER return 'General' or any other text. Only return the exact department name.`;
+        Even if the image is confusing, rely on the description to make your decision. MUST pick the single closest matching department from these 4. NEVER return any other text. Only return the exact department name.`;
 
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
         const response = await ai.models.generateContent({
@@ -164,12 +164,12 @@ const createReport = async (req, res) => {
         if (matchedDept) {
           assignedDepartment = matchedDept;
         } else {
-          // Absolute fallback if Gemini completely hallucinates or returns something invalid
-          assignedDepartment = "Municipal Corporation";
+          // Absolute fallback
+          assignedDepartment = "Garbage Management";
         }
       } catch (aiError) {
         console.error("AI Routing Error:", aiError);
-        assignedDepartment = "Municipal Corporation";
+        assignedDepartment = "Garbage Management";
       }
     }
 
@@ -187,10 +187,10 @@ const createReport = async (req, res) => {
     // ── 4. AUTO-ASSIGN TO TEAM MEMBER ──
     // Map AI department names to sub_department IDs
     const departmentMapping = {
-      "Municipal Corporation": "sanitation",
-      "Public Works Department": "roads",
-      "Electricity Department": null, // Not in our sub-departments
-      "Water Supply Department": "water_supply"
+      "Public Works Department": "pwd",
+      "Water Supply Department": "water_supply",
+      "Electricity Department": "electricity",
+      "Garbage Management": "garbage_management"
     };
 
     const subDeptId = departmentMapping[assignedDepartment];
@@ -420,9 +420,10 @@ const getTeamMemberAssignedReports = async (req, res) => {
   
   // Map sub_department to the Master Department name stored in the 'department' column
   const reverseDepartmentMapping = {
-    sanitation: "Municipal Corporation",
-    roads: "Public Works Department",
+    pwd: "Public Works Department",
     water_supply: "Water Supply Department",
+    electricity: "Electricity Department",
+    garbage_management: "Garbage Management",
   };
   const masterDept = reverseDepartmentMapping[subDept] || subDept;
 

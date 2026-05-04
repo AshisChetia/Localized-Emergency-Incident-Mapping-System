@@ -23,7 +23,7 @@ import {
   Map as MapIcon 
 } from "lucide-react";
 
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -92,6 +92,7 @@ const AuthorityDashboard = () => {
 
   const [selectedReport, setSelectedReport] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [authorityLocation, setAuthorityLocation] = useState(null);
 
   const dashboardStyle = {
     "--c-offWhite": colors.offWhite,
@@ -125,6 +126,29 @@ const AuthorityDashboard = () => {
     fetchReports();
   }, [fetchReports]);
 
+  // ── FETCH COORDINATES FOR AUTHORITY HQ ──
+  useEffect(() => {
+    const fetchHQCoordinates = async () => {
+      if (!user?.pincode) return;
+
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?postalcode=${user.pincode}&country=India&format=json`);
+        const data = await res.json();
+        
+        if (data && data.length > 0) {
+          setAuthorityLocation({
+            latitude: parseFloat(data[0].lat),
+            longitude: parseFloat(data[0].lon)
+          });
+        }
+      } catch (err) {
+        console.error("Geocoding failed for authority pincode:", user.pincode);
+      }
+    };
+
+    fetchHQCoordinates();
+  }, [user?.pincode]);
+
   const stats = {
     total: reports.length,
     reported: reports.filter((r) => r.status === "reported").length,
@@ -152,7 +176,8 @@ const AuthorityDashboard = () => {
       return (
         report.description?.toLowerCase().includes(query) ||
         report.pincode?.toString().includes(query) ||
-        report.reporter_name?.toLowerCase().includes(query)
+        report.reporter_name?.toLowerCase().includes(query) ||
+        report.status?.toLowerCase().includes(query)
       );
     });
 
@@ -334,18 +359,49 @@ const AuthorityDashboard = () => {
           {overviewMode === "map" ? (
             <div className="w-full h-[500px] bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] rounded-3xl overflow-hidden shadow-sm relative z-0">
               <MapContainer
-                key={filteredReports.length > 0 ? filteredReports[0].id : "empty-assam-view"}
-                center={filteredReports.length > 0 
-                  ? [filteredReports[0].latitude, filteredReports[0].longitude] 
-                  : [26.2006, 92.9376] 
+                key={authorityLocation ? `hq-${user.pincode}` : (filteredReports.length > 0 ? filteredReports[0].id : "empty-pincode-view")}
+                center={authorityLocation 
+                  ? [authorityLocation.latitude, authorityLocation.longitude]
+                  : filteredReports.length > 0 
+                    ? [filteredReports[0].latitude, filteredReports[0].longitude] 
+                    : [26.2006, 92.9376] 
                 }
-                zoom={filteredReports.length > 0 ? 13 : 7}
+                zoom={authorityLocation ? 13 : (filteredReports.length > 0 ? 13 : 7)}
                 className="w-full h-full z-0"
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
+
+                {/* ── Authority HQ Marker ── */}
+                {authorityLocation && (
+                  <CircleMarker
+                    center={[authorityLocation.latitude, authorityLocation.longitude]}
+                    radius={12}
+                    pathOptions={{
+                      fillColor: colors.accentGold,
+                      color: colors.charcoal,
+                      weight: 3,
+                      fillOpacity: 0.8,
+                    }}
+                  >
+                    <Popup className="rounded-xl overflow-hidden shadow-lg border-0">
+                      <div className="p-3 min-w-[200px] font-sans">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Building2 className="w-5 h-5 text-[var(--c-accentGold)]" />
+                          <h4 className="font-black text-[var(--c-charcoal)] leading-tight">Authority HQ</h4>
+                        </div>
+                        <p className="text-xs text-[var(--c-textSecondary)] font-medium mb-2">This is the registered operational zone for Pincode {user?.pincode}.</p>
+                        <div className="bg-[var(--c-sage)]/30 border border-[var(--c-olive)]/20 px-3 py-1.5 rounded-lg">
+                          <span className="text-[10px] font-bold text-[var(--c-oliveDark)] uppercase tracking-wider flex items-center gap-1.5">
+                            <ShieldCheck className="w-3.5 h-3.5" /> Jurisdiction Active
+                          </span>
+                        </div>
+                      </div>
+                    </Popup>
+                  </CircleMarker>
+                )}
 
                 {filteredReports.map((report) => (
                   report.latitude && report.longitude && (
@@ -417,6 +473,14 @@ const AuthorityDashboard = () => {
                   placeholder="Search by issue, reporter name, or pincode..."
                   className="w-full bg-white border border-[var(--c-borderLight)] rounded-full pl-11 pr-10 py-3 text-sm focus:outline-none focus:border-[var(--c-charcoal)] focus:ring-1 focus:ring-[var(--c-charcoal)] shadow-sm transition-all"
                 />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[var(--c-charcoal)] transition-colors p-1"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full lg:w-auto">
