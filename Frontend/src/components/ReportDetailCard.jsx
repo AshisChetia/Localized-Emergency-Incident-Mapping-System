@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { generateDocketPDF } from "../utils/docketGenerator";
 import { formatDate } from "../utils/dateTimeUtils";
+import UrgencyBadge from "./UrgencyBadge";
 
 const ReportDetailCard = ({ report, mode = "user", onStatusUpdate, onBack }) => {
   const navigate = useNavigate();
@@ -92,7 +93,10 @@ const ReportDetailCard = ({ report, mode = "user", onStatusUpdate, onBack }) => 
             </div>
           </div>
         </div>
-        <StatusBadge status={report.status} size="default" />
+        <div className="flex items-center gap-2">
+          <UrgencyBadge urgency={report.urgency} size="default" />
+          <StatusBadge status={report.status} size="default" />
+        </div>
       </div>
 
       <div className="p-6 sm:p-8 flex flex-col gap-8">

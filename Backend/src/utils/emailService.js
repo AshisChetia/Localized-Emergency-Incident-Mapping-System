@@ -43,6 +43,8 @@ export const sendReportConfirmation = async (email, report) => {
             <p style="margin: 0 0 10px 0;"><strong>Report ID:</strong> <span style="color: #2c5e1a;">#${report.id}</span></p>
             <p style="margin: 0 0 10px 0;"><strong>Department:</strong> ${report.department}</p>
             <p style="margin: 0 0 10px 0;"><strong>Description:</strong> ${report.description}</p>
+            ${report.urgency ? `<p style="margin: 0 0 10px 0;"><strong>Urgency:</strong> <span style="text-transform: uppercase; font-weight: bold; color: ${report.urgency === 'critical' ? '#dc2626' : report.urgency === 'medium' ? '#d97706' : '#16a34a'};">${report.urgency}</span></p>` : ''}
+            ${report.urgency === 'critical' ? '<div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 10px; margin: 10px 0;"><p style="margin: 0; color: #dc2626; font-weight: bold; font-size: 13px;">⚠️ This incident has been classified as CRITICAL and requires immediate attention.</p></div>' : ''}
             <p style="margin: 0;"><strong>Status:</strong> <span style="text-transform: uppercase; font-weight: bold; color: #d4af37;">${report.status}</span></p>
           </div>
           
@@ -100,6 +102,7 @@ export const sendStatusUpdate = async (email, report, newStatus) => {
             <p style="margin: 0 0 10px 0;"><strong>Report ID:</strong> <span style="color: #1a1a1a;">#${report.id}</span></p>
             <p style="margin: 0 0 10px 0;"><strong>Description:</strong> ${report.description}</p>
             <p style="margin: 0 0 10px 0;"><strong>Department:</strong> ${report.department}</p>
+            ${report.urgency ? `<p style="margin: 0 0 10px 0;"><strong>Urgency:</strong> <span style="text-transform: uppercase; font-weight: bold; color: ${report.urgency === 'critical' ? '#dc2626' : report.urgency === 'medium' ? '#d97706' : '#16a34a'};">${report.urgency}</span></p>` : ''}
             <p style="margin: 0;"><strong>New Status:</strong> <span style="text-transform: uppercase; font-weight: bold; color: #2c5e1a;">${newStatus.replace('_', ' ')}</span></p>
           </div>
           

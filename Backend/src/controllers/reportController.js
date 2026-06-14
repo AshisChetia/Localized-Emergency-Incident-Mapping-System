@@ -110,14 +110,16 @@ const createReport = async (req, res) => {
       return res.status(500).json({ message: "Image upload failed." });
     }
 
-    // ── 2. DEPARTMENT ROUTING ──
+    // ── 2. DEPARTMENT ROUTING + URGENCY DETECTION ──
     let assignedDepartment = "Garbage Management"; // Default to Garbage/Civic if unsure
+    let detectedUrgency = "medium"; // Default urgency
     const MASTER_DEPARTMENTS = [
       "Public Works Department",
       "Water Supply Department",
       "Electricity Department",
       "Garbage Management"
     ];
+    const VALID_URGENCIES = ["low", "medium", "critical"];
 
     // ── 2a. CHECK IF USER PROVIDED A MANUAL DEPARTMENT OVERRIDE ──
     const userOverride = userDepartmentOverride?.trim();
@@ -126,21 +128,30 @@ const createReport = async (req, res) => {
     if (isValidOverride) {
       // User explicitly chose a department — skip AI routing
       assignedDepartment = isValidOverride;
-      console.log(`📋 User override: Department set to "${assignedDepartment}"`);
+      detectedUrgency = "medium"; // Default when user overrides department
+      console.log(`📋 User override: Department set to "${assignedDepartment}", urgency defaults to "medium"`);
     } else {
-      // ── 2b. AI AUTO-ROUTING (GEMINI) ──
+      // ── 2b. AI AUTO-ROUTING + URGENCY DETECTION (GEMINI) ──
       try {
         const prompt = `You are an automated emergency incident routing AI. Analyze BOTH the attached image AND the citizen's description below.
         
         Citizen's Description: "${description}"
         
-        The description contains critical context that might not be perfectly clear from the image alone. You must weigh BOTH the visual evidence and the text to accurately classify this incident into EXACTLY ONE of the following 4 departments:
+        The description contains critical context that might not be perfectly clear from the image alone. You must weigh BOTH the visual evidence and the text to accurately classify this incident.
+
+        TASK 1 - DEPARTMENT: Classify into EXACTLY ONE of these 4 departments:
         - Public Works Department (road damage, potholes, infrastructure failure, structural collapse)
         - Water Supply Department (burst pipes, severe flooding, sewage leaks, drainage issues)
         - Electricity Department (fallen power lines, broken streetlights, electrical hazards)
         - Garbage Management (garbage piles, waste disposal, sanitation issues, public nuisances)
-        
-        Even if the image is confusing, rely on the description to make your decision. MUST pick the single closest matching department from these 4. NEVER return any other text. Only return the exact department name.`;
+
+        TASK 2 - URGENCY: Assess the urgency level of this incident:
+        - "low" = minor issue, no immediate danger (e.g., small pothole, minor litter, faded road markings)
+        - "medium" = standard issue that needs attention soon (e.g., broken streetlight, moderate water leak, garbage accumulation)
+        - "critical" = LIFE-THREATENING or causes IMMEDIATE PUBLIC DANGER (e.g., fallen power line sparking on road, massive sinkhole, sewage flooding residential area, electrical fire, collapsed bridge)
+
+        Return ONLY a valid JSON object with exactly this format, no markdown, no explanation:
+        {"department": "<exact department name from the 4 above>", "urgency": "<low|medium|critical>"}`;
 
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
         const response = await ai.models.generateContent({
@@ -156,20 +167,34 @@ const createReport = async (req, res) => {
           ]
         });
 
-        const aiResponse = response.text.trim();
+        let aiResponse = response.text.trim();
+        // Strip markdown code fences if the AI wraps JSON in them
+        aiResponse = aiResponse.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim();
 
-        // Strict exact match enforcement against the 4 master categories
-        const matchedDept = MASTER_DEPARTMENTS.find(d => d.toLowerCase() === aiResponse.toLowerCase());
-
-        if (matchedDept) {
-          assignedDepartment = matchedDept;
-        } else {
-          // Absolute fallback
-          assignedDepartment = "Garbage Management";
+        try {
+          // ── Parse JSON response (new format) ──
+          const parsed = JSON.parse(aiResponse);
+          const matchedDept = MASTER_DEPARTMENTS.find(d => d.toLowerCase() === parsed.department?.toLowerCase());
+          if (matchedDept) {
+            assignedDepartment = matchedDept;
+          }
+          if (VALID_URGENCIES.includes(parsed.urgency?.toLowerCase())) {
+            detectedUrgency = parsed.urgency.toLowerCase();
+          }
+          console.log(`🤖 AI classified: Department="${assignedDepartment}", Urgency="${detectedUrgency}"`);
+        } catch (parseError) {
+          // ── Fallback: try plain text department matching (backward compat) ──
+          console.warn("AI returned non-JSON response, falling back to text matching:", aiResponse);
+          const matchedDept = MASTER_DEPARTMENTS.find(d => d.toLowerCase() === aiResponse.toLowerCase());
+          if (matchedDept) {
+            assignedDepartment = matchedDept;
+          }
+          // Urgency stays as default "medium" if parsing fails
         }
       } catch (aiError) {
         console.error("AI Routing Error:", aiError);
         assignedDepartment = "Garbage Management";
+        detectedUrgency = "medium";
       }
     }
 
@@ -181,7 +206,8 @@ const createReport = async (req, res) => {
       latitude: parseFloat(latitude),
       longitude: parseFloat(longitude),
       pincode: routingPincode,
-      department: assignedDepartment
+      department: assignedDepartment,
+      urgency: detectedUrgency
     });
 
     // ── 4. AUTO-ASSIGN TO TEAM MEMBER ──
@@ -434,7 +460,7 @@ const getTeamMemberAssignedReports = async (req, res) => {
       `SELECT 
           id, user_id, description, pincode, 
           status, assigned_to, sub_department, department,
-          image_url, latitude, longitude, 
+          urgency, image_url, latitude, longitude, 
           created_at
        FROM reports
        WHERE pincode = ? AND (department = ? OR sub_department = ?)

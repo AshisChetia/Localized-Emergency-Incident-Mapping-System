@@ -27,12 +27,13 @@ const Report = {
     longitude,
     pincode,
     department,
+    urgency = "medium",
   }) => {
     const [result] = await db.query(
       `INSERT INTO reports
-        (user_id, description, image_url, latitude, longitude, pincode, department, status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [userId, description, imageUrl, latitude, longitude, pincode, department, "reported"]
+        (user_id, description, image_url, latitude, longitude, pincode, department, urgency, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [userId, description, imageUrl, latitude, longitude, pincode, department, urgency, "reported"]
     );
     return result;
   },
@@ -53,6 +54,7 @@ const Report = {
           r.longitude,
           r.pincode,
           r.department,
+          r.urgency,
           r.status,
           r.created_at,
           ${buildVerificationSelect(viewerId, true)}
@@ -86,6 +88,7 @@ const Report = {
           r.longitude,
           r.pincode,
           r.department,
+          r.urgency,
           r.status,
           r.created_at,
           COALESCE(rv.verification_count, 0) AS verification_count,
@@ -130,6 +133,7 @@ const Report = {
           r.longitude,
           r.pincode,
           r.department,
+          r.urgency,
           r.status,
           r.created_at,
           ${buildVerificationSelect(viewerId, true)},
@@ -177,6 +181,7 @@ const Report = {
           r.longitude,
           r.pincode,
           r.department,
+          r.urgency,
           r.status,
           r.created_at,
           COALESCE(rv.verification_count, 0) AS verification_count,
@@ -217,6 +222,7 @@ const Report = {
           r.longitude,
           r.pincode,
           r.department,
+          r.urgency,
           r.status,
           r.created_at,
           ${buildVerificationSelect(viewerId, true)}

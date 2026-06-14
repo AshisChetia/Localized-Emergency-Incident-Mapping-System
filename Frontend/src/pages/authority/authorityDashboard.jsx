@@ -26,6 +26,7 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import UrgencyBadge from "../../components/UrgencyBadge";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -596,7 +597,7 @@ const ListReportRow = ({ report, onStatusUpdate, onClick }) => {
 
   return (
     <div onClick={onClick} className="group flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 bg-white border border-[var(--c-borderLight)] rounded-2xl px-5 py-4 cursor-pointer transition-all duration-300 hover:shadow-md hover:border-[var(--c-charcoal)]">
-      <div className="shrink-0"><StatusBadge status={report.status} size="small" /></div>
+      <div className="shrink-0 flex items-center gap-2"><UrgencyBadge urgency={report.urgency} size="small" /><StatusBadge status={report.status} size="small" /></div>
       <p className="flex-1 text-[var(--c-charcoal)] font-medium text-sm line-clamp-1 min-w-0">{report.description}</p>
       <div className="flex items-center gap-4 shrink-0 flex-wrap">
         {report.reporter_name && <span className="text-[var(--c-textSecondary)] text-xs font-bold uppercase tracking-wider hidden md:block">{report.reporter_name}</span>}

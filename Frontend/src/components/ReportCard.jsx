@@ -5,6 +5,7 @@
 import { MapPin, Clock, CheckCircle, AlertCircle, User, Building2, BadgeCheck } from "lucide-react";
 import { colors, fonts } from "../styles/designTokens";
 import { formatDateShort } from "../utils/dateTimeUtils";
+import UrgencyBadge from "./UrgencyBadge";
 
 const ReportCard = ({
   report,
@@ -56,6 +57,13 @@ const ReportCard = ({
             {isResolved ? "Resolved" : "Pending"}
           </span>
         </div>
+
+        {/* Urgency Badge */}
+        {report.urgency && (
+          <div className="absolute top-4 right-4 z-10">
+            <UrgencyBadge urgency={report.urgency} size="small" />
+          </div>
+        )}
       </div>
 
       {/* ── Content Section ── */}

@@ -19,6 +19,7 @@ import {
 import { colors, fonts } from "../../styles/designTokens";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import UrgencyBadge from "../../components/UrgencyBadge";
 
 const DepartmentManagerDashboard = () => {
   const { user } = useAuth();
@@ -105,11 +106,16 @@ const DepartmentManagerDashboard = () => {
     loadData(true); 
   };
 
-  // ── Filter reports ──
-  const filteredReports = reports.filter((r) => {
-    if (activeFilter === "all") return true;
-    return r.status === activeFilter;
-  });
+  // ── Filter reports + sort critical first ──
+  const filteredReports = reports
+    .filter((r) => {
+      if (activeFilter === "all") return true;
+      return r.status === activeFilter;
+    })
+    .sort((a, b) => {
+      const urgencyOrder = { critical: 0, medium: 1, low: 2 };
+      return (urgencyOrder[a.urgency] ?? 1) - (urgencyOrder[b.urgency] ?? 1);
+    });
 
   // ── Status badge styling ──
   const getStatusStyle = (status) => {
@@ -318,6 +324,7 @@ const DepartmentManagerDashboard = () => {
                           {report.description}
                         </p>
                         <div className="flex items-center gap-2 shrink-0">
+                          <UrgencyBadge urgency={report.urgency} size="small" />
                           <span className={`px-3 py-1 rounded-full text-xs font-bold border ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
                             {statusStyle.label}
                           </span>

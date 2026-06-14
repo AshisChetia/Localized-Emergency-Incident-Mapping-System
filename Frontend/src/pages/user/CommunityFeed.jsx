@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { colors, fonts } from "../../styles/designTokens";
 import { formatDateShort } from "../../utils/dateTimeUtils";
 import { BadgeCheck, X, MapPin, Clock, Building2, ChevronRight } from "lucide-react";
+import UrgencyBadge from "../../components/UrgencyBadge";
 
 const CommunityFeed = () => {
   const [reports, setReports] = useState([]);
@@ -104,6 +105,7 @@ const CommunityFeed = () => {
                   <span className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg shadow-sm border bg-white/95 backdrop-blur-sm ${selectedReport.status === "resolved" ? "text-[var(--c-oliveDark)] border-[var(--c-sage)]" : "text-[var(--c-accentGold)] border-[#F2DCA2]"}`}>
                     {selectedReport.status}
                   </span>
+                  <UrgencyBadge urgency={selectedReport.urgency} size="small" />
                 </div>
               </div>
 
