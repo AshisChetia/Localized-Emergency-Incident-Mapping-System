@@ -99,7 +99,7 @@ const UserMessages = () => {
   };
 
   return (
-    <div style={styleParams} className="min-h-screen bg-[var(--c-offWhite)] pt-24 pb-12 px-4 selection:bg-[var(--c-sage)] selection:text-[var(--c-charcoal)]">
+    <div style={styleParams} className="min-h-screen bg-[var(--c-offWhite)] pb-12 px-4 selection:bg-[var(--c-sage)] selection:text-[var(--c-charcoal)]">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-6 h-[calc(100vh-140px)]">
         
         {/* Left Pane - Report Selection */}

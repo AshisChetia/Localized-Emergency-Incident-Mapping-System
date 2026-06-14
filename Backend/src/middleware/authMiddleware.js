@@ -42,7 +42,7 @@ const authMiddleware = async (req, res, next) => {
     let fields = "";
 
     if (role === "user") {
-      fields = "id, name, email, pincode";
+      fields = "id, name, email, pincode, number";
       query  = `SELECT ${fields} FROM users WHERE id = ?`;
     } else if (role === "authority") {
       fields = "id, name, email, pincode, is_approved";

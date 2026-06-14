@@ -19,3 +19,6 @@ export const approveAuthority = (id) =>
 
 export const rejectAuthority = (id) =>
   api.delete(`/admin/authorities/${id}/reject`); // FIXED: Changed to delete to match route
+
+export const getAuthorityDetails = (id) => 
+  api.get(`/admin/authorities/${id}/details`);

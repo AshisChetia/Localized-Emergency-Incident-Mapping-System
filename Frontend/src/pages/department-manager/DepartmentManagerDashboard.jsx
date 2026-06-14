@@ -12,7 +12,7 @@ import Loader from "../../components/Loader";
 import StatsChart from "../../components/StatsChart";
 import toast from "react-hot-toast";
 import {
-  Briefcase, AlertCircle, Clock, CheckCircle2,
+  Briefcase, Clock, CheckCircle2,
   MapPin, Calendar, Filter, Eye, X, Lock, BarChart2, Navigation,
   FileText
 } from "lucide-react";
@@ -158,10 +158,9 @@ const DepartmentManagerDashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         {[
           { label: "Total", count: stats.total, icon: Briefcase, bg: "bg-blue-50", iconColor: "text-blue-500" },
-          { label: "Reported", count: stats.reported, icon: AlertCircle, bg: "bg-gray-50", iconColor: "text-gray-500" },
           { label: "Under Review", count: stats.underReview, icon: Eye, bg: "bg-amber-50", iconColor: "text-amber-500" },
           { label: "In Progress", count: stats.inProgress, icon: Clock, bg: "bg-blue-50", iconColor: "text-blue-500" },
           { label: "Resolved", count: stats.resolved, icon: CheckCircle2, bg: "bg-emerald-50", iconColor: "text-emerald-500" },
@@ -182,7 +181,7 @@ const DepartmentManagerDashboard = () => {
         <Filter className="w-4 h-4 text-gray-400 shrink-0" />
         {[
           { key: "all", label: "All Reports" },
-          { key: "reported", label: "Reported" },
+
           { key: "under_review", label: "Under Review" },
           { key: "in_progress", label: "In Progress" },
           { key: "resolved", label: "Resolved" },

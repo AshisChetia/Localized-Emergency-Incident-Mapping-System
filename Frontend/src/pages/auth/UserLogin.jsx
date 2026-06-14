@@ -8,7 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 import { loginUser } from "../../services/authService";
 import Loader from "../../components/Loader";
 import toast from "react-hot-toast";
-import { MapPin, Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { MapPin, Mail, Lock, Eye, EyeOff, ArrowRight, User } from "lucide-react";
 import { colors, fonts } from "../../styles/designTokens";
 
 const UserLogin = () => {
@@ -78,13 +78,13 @@ const UserLogin = () => {
         
         {/* Header */}
         <div className="flex flex-col items-center text-center gap-2">
-          <div className="w-12 h-12 bg-[var(--c-olive)] rounded-2xl flex items-center justify-center shadow-md mb-2">
-            <MapPin className="w-6 h-6 text-[var(--c-offWhite)]" />
+          <div className="w-16 h-16 bg-[var(--c-olive)] rounded-full flex items-center justify-center shadow-lg mb-2 border-4 border-[var(--c-offWhite)]">
+            <User className="w-8 h-8 text-[var(--c-offWhite)]" />
           </div>
-          <h1 className="text-2xl font-black text-[var(--c-charcoal)] tracking-tight" style={{ fontFamily: fonts.heading }}>
-            Welcome Back
+          <h1 className="text-3xl font-black text-[var(--c-charcoal)] tracking-tight" style={{ fontFamily: fonts.heading }}>
+            Citizen Login
           </h1>
-          <p className="text-sm text-gray-500">Sign in to continue to your dashboard</p>
+          <p className="text-sm font-medium text-[var(--c-textSecondary)]">Sign in to report and track local incidents</p>
         </div>
 
         {/* Form */}
@@ -134,17 +134,25 @@ const UserLogin = () => {
         </form>
 
         {/* Footer Links */}
-        <div className="flex flex-col gap-3 text-center mt-2">
+        <div className="flex flex-col gap-4 text-center mt-2">
           <p className="text-sm text-gray-500">
-            Don't have an account? <Link to="/register" className="text-[var(--c-olive)] font-bold hover:underline">Create one free</Link>
+            Don't have an account? <Link to="/register" className="text-[var(--c-olive)] font-black hover:underline">Create one free</Link>
           </p>
-          <div className="h-px w-full bg-[var(--c-borderLight)] my-1"></div>
-          <p className="text-xs text-gray-400">
-            Are you a local official? <Link to="/authority/login" className="text-[var(--c-accentGold)] font-bold hover:underline">Go to Authority Portal</Link>
-          </p>
-          <p className="text-xs text-gray-400">
-            Department Manager? <Link to="/department-manager/login" className="text-[var(--c-sage)] font-bold hover:underline">Sign in here</Link>
-          </p>
+          
+          <div className="relative flex items-center py-2">
+            <div className="flex-grow border-t border-[var(--c-borderLight)]"></div>
+            <span className="flex-shrink-0 mx-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Other Portals</span>
+            <div className="flex-grow border-t border-[var(--c-borderLight)]"></div>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+            <Link to="/authority/login" className="text-xs font-bold px-4 py-2 rounded-lg bg-[var(--c-accentGold)]/10 text-[var(--c-accentGold)] hover:bg-[var(--c-accentGold)]/20 transition-colors w-full sm:w-auto">
+              Authority Portal
+            </Link>
+            <Link to="/department-manager/login" className="text-xs font-bold px-4 py-2 rounded-lg bg-[var(--c-sage)]/20 text-[var(--c-oliveDark)] hover:bg-[var(--c-sage)]/40 transition-colors w-full sm:w-auto">
+              Department Portal
+            </Link>
+          </div>
         </div>
 
       </div>

@@ -45,6 +45,7 @@ const User = {
           name,
           email,
           pincode,
+          number,
           created_at
        FROM users 
        WHERE id = ?`,
@@ -73,14 +74,14 @@ const User = {
 
   // ═══════════════════════════════════════
   //  UPDATE USER PROFILE
-  //  Allows user to update name or pincode
+  //  Allows user to update name, pincode, or number
   // ═══════════════════════════════════════
-  updateById: async (id, { name, pincode }) => {
+  updateById: async (id, { name, pincode, number }) => {
     const [result] = await db.query(
       `UPDATE users 
-       SET name = ?, pincode = ?
+       SET name = ?, pincode = ?, number = ?
        WHERE id = ?`,
-      [name, pincode, id]
+      [name, pincode, number, id]
     );
     return result;
   },

@@ -106,14 +106,14 @@ const AuthorityRegister = () => {
 
       <div className="relative z-10 w-full max-w-[500px] bg-white/80 backdrop-blur-xl border border-[var(--c-borderLight)] rounded-3xl shadow-2xl p-8 flex flex-col gap-5 my-8">
         
-        <div className="flex flex-col items-center text-center gap-1">
-          <div className="w-10 h-10 bg-[var(--c-charcoal)] rounded-xl flex items-center justify-center shadow-md mb-2">
-            <Building2 className="w-5 h-5 text-[var(--c-accentGold)]" />
+        <div className="flex flex-col items-center text-center gap-2">
+          <div className="w-16 h-16 bg-[var(--c-accentGold)] rounded-full flex items-center justify-center shadow-lg mb-2 border-4 border-[var(--c-offWhite)]">
+            <Building2 className="w-8 h-8 text-[var(--c-charcoal)]" />
           </div>
-          <h1 className="text-2xl font-black text-[var(--c-charcoal)] tracking-tight" style={{ fontFamily: fonts.heading }}>
-            Official Registration
+          <h1 className="text-3xl font-black text-[var(--c-charcoal)] tracking-tight" style={{ fontFamily: fonts.heading }}>
+            Authority Registration
           </h1>
-          <p className="text-sm text-gray-500">Request access for your local department.</p>
+          <p className="text-sm font-medium text-[var(--c-textSecondary)]">Request access for your local municipality</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
@@ -173,14 +173,26 @@ const AuthorityRegister = () => {
           </button>
         </form>
 
-        <div className="flex flex-col gap-3 text-center mt-1">
-          <p className="text-sm text-gray-500">
-            Already have an approved account? <Link to="/authority/login" className="text-[var(--c-accentGold)] font-bold hover:underline">Sign in here</Link>
+        {/* Footer Links */}
+        <div className="flex flex-col gap-4 text-center mt-2">
+          <p className="text-sm text-[var(--c-textSecondary)]">
+            Already have an approved account? <Link to="/authority/login" className="text-[var(--c-accentGold)] font-black hover:underline">Sign in here</Link>
           </p>
-          <div className="h-px w-full bg-[var(--c-borderLight)] my-1"></div>
-          <p className="text-xs text-gray-400">
-            Not a local official? <Link to="/register" className="text-[var(--c-olive)] font-bold hover:underline">Go to Citizen Registration</Link>
-          </p>
+          
+          <div className="relative flex items-center py-2">
+            <div className="flex-grow border-t border-[var(--c-borderLight)]"></div>
+            <span className="flex-shrink-0 mx-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Other Portals</span>
+            <div className="flex-grow border-t border-[var(--c-borderLight)]"></div>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+            <Link to="/register" className="text-xs font-bold px-4 py-2 rounded-lg bg-[var(--c-olive)]/10 text-[var(--c-oliveDark)] hover:bg-[var(--c-olive)]/20 transition-colors w-full sm:w-auto">
+              Citizen Registration
+            </Link>
+            <Link to="/login" className="text-xs font-bold px-4 py-2 rounded-lg bg-[var(--c-sage)]/20 text-[var(--c-oliveDark)] hover:bg-[var(--c-sage)]/40 transition-colors w-full sm:w-auto">
+              Citizen Login
+            </Link>
+          </div>
         </div>
 
       </div>

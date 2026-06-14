@@ -349,15 +349,16 @@ const updateReportStatus = async (req, res) => {
       if (status === "closed") {
         return res.status(403).json({ message: "Only the authority can close a report" });
       }
-      if (report.assigned_to !== req.user.id) {
+      if (String(report.assigned_to) !== String(req.user.id)) {
         // Check if report matches their sub_department even if not directly assigned
+        // This handles old reports that were created before auto-assignment existed
         const departmentMapping = {
-          "Municipal Corporation": "sanitation",
-          "Public Works Department": "roads",
+          "Public Works Department": "pwd",
+          "Water Supply Department": "water_supply",
           "Electricity Department": "electricity",
-          "Water Supply Department": "water_supply"
+          "Garbage Management": "garbage_management"
         };
-        const reportSubDept = departmentMapping[report.department];
+        const reportSubDept = report.sub_department || departmentMapping[report.department];
         if (reportSubDept !== req.user.sub_department) {
           return res.status(403).json({ message: "This report is not assigned to your department" });
         }

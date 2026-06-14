@@ -8,7 +8,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { loginTeamMember } from "../../services/authService";
 import Loader from "../../components/Loader";
 import toast from "react-hot-toast";
-import { Mail, Lock, Eye, EyeOff, LogIn } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, LogIn, Briefcase } from "lucide-react";
 import { colors, fonts } from "../../styles/designTokens";
 import { useAuth } from "../../context/AuthContext";
 
@@ -88,13 +88,13 @@ const DepartmentManagerLogin = () => {
 
       <div className="relative z-10 w-full max-w-sm bg-white/80 backdrop-blur-xl border border-[var(--c-borderLight)] rounded-3xl shadow-2xl p-8 flex flex-col gap-5 my-8">
         <div className="flex flex-col items-center text-center gap-2">
-          <div className="w-10 h-10 bg-[var(--c-charcoal)] rounded-xl flex items-center justify-center shadow-md mb-2">
-            <LogIn className="w-5 h-5 text-[var(--c-accentGold)]" />
+          <div className="w-16 h-16 bg-[var(--c-sage)] rounded-full flex items-center justify-center shadow-lg mb-2 border-4 border-[var(--c-offWhite)]">
+            <Briefcase className="w-8 h-8 text-[var(--c-oliveDark)]" />
           </div>
-          <h1 className="text-2xl font-black text-[var(--c-charcoal)] tracking-tight" style={{ fontFamily: fonts.heading }}>
-            Department Manager
+          <h1 className="text-3xl font-black text-[var(--c-charcoal)] tracking-tight" style={{ fontFamily: fonts.heading }}>
+            Department Login
           </h1>
-          <p className="text-sm text-gray-500">Access your department dashboard</p>
+          <p className="text-sm font-medium text-[var(--c-textSecondary)]">Access your assigned incident dashboard</p>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
@@ -124,17 +124,22 @@ const DepartmentManagerLogin = () => {
           </button>
         </form>
 
-        <div className="text-center pt-4 border-t border-[var(--c-borderLight)]">
-          <p className="text-xs text-gray-600">
-            Not a department manager?{" "}
-            <Link to="/login" className="text-[var(--c-olive)] font-bold hover:underline">
-              Citizen Login
+        {/* Footer Links */}
+        <div className="flex flex-col gap-4 text-center mt-2">
+          <div className="relative flex items-center py-2">
+            <div className="flex-grow border-t border-[var(--c-borderLight)]"></div>
+            <span className="flex-shrink-0 mx-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Other Portals</span>
+            <div className="flex-grow border-t border-[var(--c-borderLight)]"></div>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+            <Link to="/login" className="text-xs font-bold px-4 py-2 rounded-lg bg-[var(--c-olive)]/10 text-[var(--c-oliveDark)] hover:bg-[var(--c-olive)]/20 transition-colors w-full sm:w-auto">
+              Citizen Portal
             </Link>
-            {" | "}
-            <Link to="/authority/login" className="text-[var(--c-accentGold)] font-bold hover:underline">
-              Chief Login
+            <Link to="/authority/login" className="text-xs font-bold px-4 py-2 rounded-lg bg-[var(--c-accentGold)]/10 text-[var(--c-accentGold)] hover:bg-[var(--c-accentGold)]/20 transition-colors w-full sm:w-auto">
+              Authority Portal
             </Link>
-          </p>
+          </div>
         </div>
       </div>
     </div>

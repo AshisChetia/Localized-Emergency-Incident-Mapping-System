@@ -15,6 +15,7 @@ import {
   getPincodeCoverage,
   getAllUsers,
   getPlatformStats,
+  getAuthorityDetails,
 } from "../controllers/adminController.js";
 
 import { getAllReports } from "../controllers/reportController.js";
@@ -29,6 +30,7 @@ router.get("/stats", authMiddleware, isAdmin, getPlatformStats);
 // FIXED: Changed from "/authorities" to "/authorities/active" to match frontend
 router.get("/authorities/active", authMiddleware, isAdmin, getAllAuthorities);
 router.get("/authorities/pending", authMiddleware, isAdmin, getPendingRequests);
+router.get("/authorities/:id/details", authMiddleware, isAdmin, getAuthorityDetails);
 
 router.patch("/authorities/:id/approve", authMiddleware, isAdmin, approveAuthority);
 router.delete("/authorities/:id/reject", authMiddleware, isAdmin, rejectAuthority);

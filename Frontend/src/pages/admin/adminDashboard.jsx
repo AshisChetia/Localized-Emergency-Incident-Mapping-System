@@ -10,6 +10,7 @@ import {
   getActiveAuthorities,
   approveAuthority,
   rejectAuthority,
+  getAuthorityDetails,
 } from "../../services/adminService";
 
 import AuthorityRequestCard from "../../components/AuthorityRequestCard";
@@ -42,6 +43,12 @@ const AdminDashboard = () => {
 
   const [activeTab, setActiveTab] = useState("pending");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // ── Modal State ──
+  const [selectedAuthority, setSelectedAuthority] = useState(null);
+  const [selectedAuthorityTeam, setSelectedAuthorityTeam] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
 
   const dashboardStyle = {
     "--c-offWhite": colors.offWhite,
@@ -139,6 +146,21 @@ const AdminDashboard = () => {
       await fetchDashboardData(true); 
     } catch (err) {
       toast.error("Failed to reject authority");
+    }
+  };
+
+  const handleViewAuthority = async (id) => {
+    setIsModalOpen(true);
+    setModalLoading(true);
+    try {
+      const res = await getAuthorityDetails(id);
+      setSelectedAuthority(res.data.authority);
+      setSelectedAuthorityTeam(res.data.teamMembers || []);
+    } catch (err) {
+      toast.error("Failed to load authority details");
+      setIsModalOpen(false);
+    } finally {
+      setModalLoading(false);
     }
   };
 
@@ -397,7 +419,7 @@ const AdminDashboard = () => {
                 </div>
                 
                 {displayedActive.map((auth) => (
-                  <div key={auth.id} className="bg-white border border-[var(--c-borderLight)] rounded-2xl p-5 hover:shadow-md transition-shadow grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                  <div key={auth.id} className="bg-white border border-[var(--c-borderLight)] rounded-2xl p-5 hover:shadow-md transition-shadow grid grid-cols-1 sm:grid-cols-12 gap-4 items-center cursor-pointer" onClick={() => handleViewAuthority(auth.id)}>
                     
                     <div className="col-span-1 sm:col-span-4 flex items-center gap-4">
                       <div className="w-12 h-12 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-center shrink-0">
@@ -437,6 +459,97 @@ const AdminDashboard = () => {
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}} />
+
+      {/* ── AUTHORITY DETAILS MODAL ── */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-3xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-fade-in-up">
+            
+            {/* Modal Header */}
+            <div className="px-6 py-5 border-b border-[var(--c-borderLight)] flex items-center justify-between bg-[var(--c-offWhite)]">
+              <h2 className="text-xl font-black text-[var(--c-charcoal)] flex items-center gap-2" style={{ fontFamily: fonts.heading }}>
+                <Building2 className="w-5 h-5 text-blue-500" />
+                Authority Details
+              </h2>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto">
+              {modalLoading ? (
+                <div className="flex flex-col items-center justify-center h-40 text-gray-500">
+                  <Loader variant="spinner" size="md" />
+                  <p className="mt-4 text-sm font-bold tracking-wide uppercase">Loading Profile...</p>
+                </div>
+              ) : selectedAuthority ? (
+                <div className="flex flex-col gap-8">
+                  {/* Basic Info */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-blue-50/50 p-6 rounded-2xl border border-blue-100">
+                    <div>
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Municipality Name</p>
+                      <p className="text-lg font-black text-[var(--c-charcoal)]">{selectedAuthority.name}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Email Address</p>
+                      <p className="text-[var(--c-textSecondary)] font-medium">{selectedAuthority.email}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Jurisdiction (Pincode)</p>
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-[var(--c-borderLight)] rounded-md font-bold text-[var(--c-charcoal)]">
+                        <MapPin className="w-4 h-4 text-[var(--c-olive)]" /> {selectedAuthority.pincode}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Joined Date</p>
+                      <p className="text-[var(--c-textSecondary)] font-medium">{formatDateShort(selectedAuthority.created_at)}</p>
+                    </div>
+                  </div>
+
+                  {/* Team Members List */}
+                  <div>
+                    <h3 className="text-lg font-bold text-[var(--c-charcoal)] mb-4 flex items-center gap-2">
+                      <Users className="w-5 h-5 text-[var(--c-oliveDark)]" />
+                      Department Managers ({selectedAuthorityTeam.length})
+                    </h3>
+                    
+                    {selectedAuthorityTeam.length === 0 ? (
+                      <div className="bg-[var(--c-offWhite)] border border-[var(--c-borderLight)] rounded-2xl p-8 text-center">
+                        <p className="text-[var(--c-textSecondary)] font-medium">This authority has not added any department managers yet.</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {selectedAuthorityTeam.map(member => (
+                          <div key={member.id} className="bg-white border border-[var(--c-borderLight)] rounded-xl p-4 shadow-sm flex flex-col gap-2">
+                            <div className="flex justify-between items-start">
+                              <p className="font-bold text-[var(--c-charcoal)]">{member.name}</p>
+                              <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider ${member.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                {member.is_active ? 'Active' : 'Inactive'}
+                              </span>
+                            </div>
+                            <p className="text-xs text-[var(--c-textSecondary)] flex items-center gap-1.5">
+                              <Mail className="w-3.5 h-3.5 text-gray-400" /> {member.email}
+                            </p>
+                            <div className="mt-2 pt-2 border-t border-[var(--c-borderLight)]">
+                              <p className="text-xs font-bold text-[var(--c-oliveDark)] uppercase tracking-wider">
+                                {member.sub_department}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center text-red-500 py-8">Failed to load data.</div>
+              )}
+            </div>
+            
+          </div>
+        </div>
+      )}
     </div>
   );
 };

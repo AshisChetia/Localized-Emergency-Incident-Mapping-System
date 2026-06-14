@@ -13,6 +13,7 @@ import { colors, fonts } from "../../styles/designTokens";
 
 const AdminLogin = () => {
   const { login } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/admin/dashboard";
 
@@ -66,8 +67,8 @@ const AdminLogin = () => {
       // FIXED: Safely use email instead of name to prevent React from crashing!
       toast.success(`Admin access granted for ${admin.email}`);
       
-      // Force a hard redirect to the dashboard to bypass any React state race conditions
-      window.location.href = from;
+      // Navigate to the dashboard smoothly
+      navigate(from, { replace: true });
 
     } catch (error) {
       const msg = error?.response?.data?.message || "";

@@ -9,6 +9,7 @@ import Admin from "../models/Admin.js";
 import Authority from "../models/Authority.js";
 import User from "../models/User.js";
 import Report from "../models/Report.js";
+import TeamMember from "../models/TeamMember.js";
 
 // ═════════════════════════════════════════
 //  GET ADMIN DASHBOARD
@@ -195,6 +196,33 @@ export const getAllAuthorities = async (req, res) => {
         console.error("Get All Authorities Error:", error);
         return res.status(500).json({
             message: "Server error while fetching authorities",
+        });
+    }
+};
+
+// ═════════════════════════════════════════
+//  GET AUTHORITY DETAILS (INCLUDING TEAM)
+//  GET /api/admin/authorities/:id/details
+//  Access: Super Admin (Protected)
+// ═════════════════════════════════════════
+export const getAuthorityDetails = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const authority = await Authority.findById(id);
+        if (!authority) {
+            return res.status(404).json({ message: "Authority not found" });
+        }
+
+        const teamMembers = await TeamMember.findByAuthority(id);
+
+        return res.status(200).json({
+            authority,
+            teamMembers,
+        });
+    } catch (error) {
+        console.error("Get Authority Details Error:", error);
+        return res.status(500).json({
+            message: "Server error while fetching authority details",
         });
     }
 };
