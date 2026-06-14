@@ -20,13 +20,14 @@ import {
   ShieldCheck, FileText, Clock, CheckCircle, RefreshCw,
   Search, X, Inbox, BarChart2, MapPin, ChevronDown,
   List, LayoutGrid, SlidersHorizontal, Building2,
-  Map as MapIcon 
+  Map as MapIcon, Download
 } from "lucide-react";
 
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import UrgencyBadge from "../../components/UrgencyBadge";
+import { downloadMonthlyCSV } from "../../utils/csvExporter";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -328,6 +329,21 @@ const AuthorityDashboard = () => {
                 <BarChart2 className="w-4 h-4" /> <span className="hidden sm:inline">Upvote Chart</span>
               </button>
             </div>
+
+            <button
+              onClick={() => {
+                try {
+                  downloadMonthlyCSV(reports);
+                  toast.success("Monthly report downloaded successfully");
+                } catch (error) {
+                  toast.error(error.message || "Failed to download report");
+                }
+              }}
+              className="flex items-center gap-2 bg-[var(--c-charcoal)] hover:bg-[var(--c-oliveDark)] text-white px-4 py-2.5 rounded-full text-xs font-bold shadow-sm transition-all"
+            >
+              <Download className="w-4 h-4" />
+              <span className="hidden sm:inline">Monthly Report</span>
+            </button>
 
             <button
               onClick={() => { fetchReports(true); }}
