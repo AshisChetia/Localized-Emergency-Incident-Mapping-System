@@ -25,20 +25,20 @@ const uploadToCloudinary = (fileBuffer, folderName) => {
 // ─────────────────────────────────────────
 const normalizeReport = (report) => {
   if (!report) return report;
-  
+
   const normalized = { ...report };
 
   normalized.verification_count = Number(normalized.verification_count || 0);
   normalized.is_verified_by_me = Boolean(Number(normalized.is_verified_by_me || 0));
   normalized.can_verify = Boolean(
     normalized.viewer_role === "user" &&
-    normalized.status === "pending" &&
+    normalized.status === "reported" &&
     normalized.user_id &&
     normalized.viewer_id &&
     normalized.user_id !== normalized.viewer_id &&
     normalized.pincode === normalized.viewer_pincode
   );
-  
+
   // Convert created_at to ISO format if it exists
   if (normalized.created_at) {
     if (normalized.created_at instanceof Date) {
@@ -52,7 +52,7 @@ const normalizeReport = (report) => {
       }
     }
   }
-  
+
   // Convert updated_at to ISO format if it exists
   if (normalized.updated_at) {
     if (normalized.updated_at instanceof Date) {
@@ -65,7 +65,7 @@ const normalizeReport = (report) => {
       }
     }
   }
-  
+
   delete normalized.viewer_id;
   delete normalized.viewer_pincode;
   delete normalized.viewer_role;
@@ -444,7 +444,7 @@ const getTeamMemberAssignedReports = async (req, res) => {
   const teamMemberId = req.user.id;
   const pincode = req.user.pincode;
   const subDept = req.user.sub_department;
-  
+
   // Map sub_department to the Master Department name stored in the 'department' column
   const reverseDepartmentMapping = {
     pwd: "Public Works Department",
@@ -557,8 +557,8 @@ const verifyReport = async (req, res) => {
       return res.status(403).json({ message: "You can only verify reports from your own pincode" });
     }
 
-    if (report.status !== "pending") {
-      return res.status(400).json({ message: "Only pending reports can be verified" });
+    if (report.status !== "reported") {
+      return res.status(400).json({ message: "Only newly reported incidents can be verified" });
     }
 
     const alreadyVerified = await ReportVerification.hasVerified(id, userId);

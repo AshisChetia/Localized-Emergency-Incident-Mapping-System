@@ -7,7 +7,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { colors, fonts } from "../styles/designTokens";
 import {
-  Menu, X, MapPin, LayoutDashboard, LogOut, BadgeCheck, MessageSquare
+  Menu, X, MapPin, LayoutDashboard, LogOut, BadgeCheck, MessageSquare, Building2
 } from "lucide-react";
 
 const Navbar = () => {
@@ -131,6 +131,9 @@ const Navbar = () => {
                   <Link to="/user/messages" className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${location.pathname === "/user/messages" ? "text-[var(--c-olive)]" : "text-[var(--c-textSecondary)] hover:text-[var(--c-olive)]"}`}>
                     <MessageSquare className="w-4 h-4" /> Complaints
                   </Link>
+                  <Link to="/user/authority-details" className={`text-sm font-medium flex items-center gap-1.5 transition-colors ${location.pathname === "/user/authority-details" ? "text-[var(--c-olive)]" : "text-[var(--c-textSecondary)] hover:text-[var(--c-olive)]"}`}>
+                    <Building2 className="w-4 h-4" /> Authority Details
+                  </Link>
                 </>
               )}
               {user.role === "authority" && (
@@ -227,6 +230,9 @@ const Navbar = () => {
                   </Link>
                   <Link to="/user/messages" onClick={closeMenu} className="flex items-center gap-3 text-lg font-medium text-[var(--c-charcoal)] p-2 hover:bg-white rounded-xl transition-colors">
                     <MessageSquare className="w-5 h-5 text-[var(--c-olive)]" /> Complaints
+                  </Link>
+                  <Link to="/user/authority-details" onClick={closeMenu} className="flex items-center gap-3 text-lg font-medium text-[var(--c-charcoal)] p-2 hover:bg-white rounded-xl transition-colors">
+                    <Building2 className="w-5 h-5 text-[var(--c-olive)]" /> Authority Details
                   </Link>
                 </>
               )}

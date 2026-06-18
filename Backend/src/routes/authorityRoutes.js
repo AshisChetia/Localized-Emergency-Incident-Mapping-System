@@ -19,6 +19,7 @@ import { isAuthority }   from "../middleware/roleMiddleware.js";
 import {
   getAuthorityDashboard,
   getAuthorityProfile,
+  updateAuthorityProfile,
   createTeamMember,
   getTeamMembers,
   updateTeamMember,
@@ -47,6 +48,13 @@ router.get(
   authMiddleware,
   isAuthority,
   getAuthorityProfile
+);
+
+router.patch(
+  "/profile",
+  authMiddleware,
+  isAuthority,
+  updateAuthorityProfile
 );
 
 // ═════════════════════════════════════════

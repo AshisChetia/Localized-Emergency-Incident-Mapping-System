@@ -13,12 +13,12 @@ const Authority = {
   //  Submitted with is_approved = false
   //  Super Admin must approve before login
   // ═══════════════════════════════════════
-  create: async ({ name, email, password, pincode }) => {
+  create: async ({ name, email, password, pincode, office_location }) => {
     const [result] = await db.query(
       `INSERT INTO authorities
-        (name, email, password, pincode, is_approved)
-       VALUES (?, ?, ?, ?, ?)`,
-      [name, email, password, pincode, false]
+        (name, email, password, pincode, office_location, is_approved)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [name, email, password, pincode, office_location, false]
     );
     return result;
   },
@@ -46,6 +46,7 @@ const Authority = {
           name,
           email,
           pincode,
+          office_location,
           is_approved,
           created_at
        FROM authorities
@@ -124,6 +125,34 @@ const Authority = {
        SET is_approved = true
        WHERE id = ?`,
       [id]
+    );
+    return result;
+  },
+
+  // ═══════════════════════════════════════
+  //  UPDATE AUTHORITY PROFILE
+  //  Dynamically updates provided fields
+  //  (name, email, office_location)
+  //  Pincode is NEVER updatable
+  // ═══════════════════════════════════════
+  updateProfile: async (id, updates) => {
+    const allowedFields = ["name", "email", "office_location"];
+    const setClauses = [];
+    const values = [];
+
+    for (const [key, value] of Object.entries(updates)) {
+      if (allowedFields.includes(key)) {
+        setClauses.push(`${key} = ?`);
+        values.push(value);
+      }
+    }
+
+    if (setClauses.length === 0) return null;
+
+    values.push(id);
+    const [result] = await db.query(
+      `UPDATE authorities SET ${setClauses.join(", ")} WHERE id = ?`,
+      values
     );
     return result;
   },
@@ -221,6 +250,8 @@ const Authority = {
           id,
           name,
           email,
+          pincode,
+          office_location,
           created_at
        FROM authorities
        WHERE pincode = ?
@@ -240,6 +271,24 @@ const Authority = {
       `SELECT id, name, email, is_approved
        FROM authorities
        WHERE pincode = ?`,
+      [pincode]
+    );
+    return rows[0] || null;
+  },
+
+  findApprovedDetailsByPincode: async (pincode) => {
+    const [rows] = await db.query(
+      `SELECT
+          id,
+          name,
+          email,
+          pincode,
+          office_location,
+          created_at
+       FROM authorities
+       WHERE pincode = ?
+         AND is_approved = true
+       LIMIT 1`,
       [pincode]
     );
     return rows[0] || null;

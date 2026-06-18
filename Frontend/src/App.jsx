@@ -20,6 +20,7 @@ import UserDashboard from "./pages/user/UserDashboard";
 import UserProfile from "./pages/user/UserProfile";
 import CommunityFeed from "./pages/user/CommunityFeed";
 import UserMessages from "./pages/user/UserMessages";
+import AuthorityDetails from "./pages/user/AuthorityDetails";
 import AuthorityDashboard from "./pages/authority/authorityDashboard";
 import AuthorityProfile from "./pages/authority/authorityProfile";
 import TeamManagementPage from "./pages/authority/TeamManagementPage";
@@ -65,6 +66,10 @@ const App = () => {
           <Route
             path="/user/messages"
             element={ <ProtectedRoute allowedRole="user"><UserMessages /></ProtectedRoute> }
+          />
+          <Route
+            path="/user/authority-details"
+            element={ <ProtectedRoute allowedRole="user"><AuthorityDetails /></ProtectedRoute> }
           />
 
           <Route

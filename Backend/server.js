@@ -9,7 +9,7 @@ import adminRoutes from "./src/routes/adminRoutes.js";
 import cors from "cors";
 
 // Connect to TiDB
-connectDB();
+await connectDB();
 
 const app = express();
 

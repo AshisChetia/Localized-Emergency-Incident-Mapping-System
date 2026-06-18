@@ -10,20 +10,13 @@ export const downloadMonthlyCSV = (reports) => {
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
-  // Filter resolved reports from the current month
+  // Filter all resolved and closed reports for the export
   const monthlyResolvedReports = reports.filter(report => {
-    if (report.status !== 'resolved') return false;
-    
-    if (!report.created_at) return false;
-    
-    const parsedDate = parseUTCDate(report.created_at);
-    if (Number.isNaN(parsedDate.getTime())) return false;
-    
-    return parsedDate.getMonth() === currentMonth && parsedDate.getFullYear() === currentYear;
+    return report.status === 'resolved' || report.status === 'closed';
   });
 
   if (monthlyResolvedReports.length === 0) {
-    throw new Error('No resolved reports found for the current month.');
+    throw new Error('No resolved or closed reports found to export.');
   }
 
   // Create CSV header

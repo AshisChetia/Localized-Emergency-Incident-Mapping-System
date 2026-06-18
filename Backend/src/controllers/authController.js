@@ -142,19 +142,24 @@ export const loginUser = async (req, res) => {
 
 // ── Register Authority (Request Only) ──────
 export const registerAuthority = async (req, res) => {
-  const { name, email, password, pincode } = req.body;
+  const { name, email, password, pincode, office_location } = req.body;
 
   try {
-    if (!name || !email || !password || !pincode) {
+    if (!name || !email || !password || !pincode || !office_location) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
     const normalizedName = name?.trim();
     const normalizedEmail = email?.trim().toLowerCase();
     const normalizedPincode = String(pincode || "").trim();
+    const normalizedOfficeLocation = String(office_location || "").trim();
 
     if (!PINCODE_REGEX.test(normalizedPincode)) {
       return res.status(400).json({ message: "Pincode must be exactly 6 digits" });
+    }
+
+    if (normalizedOfficeLocation.length < 5 || normalizedOfficeLocation.length > 500) {
+      return res.status(400).json({ message: "Office location must be between 5 and 500 characters" });
     }
 
     if (password.length < 6) {
@@ -182,6 +187,7 @@ export const registerAuthority = async (req, res) => {
       email: normalizedEmail,
       password: hashedPassword,
       pincode: normalizedPincode,
+      office_location: normalizedOfficeLocation,
     });
 
     return res.status(201).json({
@@ -229,6 +235,7 @@ export const loginAuthority = async (req, res) => {
         name: authority.name,
         email: authority.email,
         pincode: authority.pincode,
+        office_location: authority.office_location,
         major_department: authority.major_department,
         sub_department: authority.sub_department,
         role: "authority",

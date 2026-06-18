@@ -7,7 +7,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { colors, fonts } from "../styles/designTokens";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, MapPin, ShieldCheck, Server, Globe, BarChart3, Cloud, Camera, UserCheck } from "lucide-react";
+import { ArrowRight, MapPin, ShieldCheck, Server, Globe, BarChart3, Cloud, Camera, UserCheck, Brain, MessageSquare, ThumbsUp, Users, Map } from "lucide-react";
 import { useRef } from "react";
 
 // ── Ultra-Smooth Beziers ──
@@ -163,60 +163,84 @@ const Landing = () => {
           {/* Grid Layout Container */}
           <div id="how-it-works" className="grid grid-cols-1 md:grid-cols-3 gap-6 md:auto-rows-[300px] scroll-mt-28">
             
-            {/* Bento Block 1 - Large Wide */}
+            {/* Block 1 - Wide: AI Urgency Detection */}
             <motion.div 
               initial="hidden" whileInView="visible" viewport={{ once: true }} variants={scaleIn}
-              className="md:col-span-2 relative bg-[var(--c-offWhite)] rounded-[2rem] p-8 md:p-10 flex flex-col justify-between border border-[var(--c-borderLight)] overflow-hidden group hover:border-[var(--c-sage)] transition-colors min-h-[300px] md:min-h-0"
+              className="md:col-span-2 relative bg-[var(--c-oliveDark)] text-white rounded-[2rem] p-8 md:p-10 flex flex-col justify-between overflow-hidden group min-h-[300px] md:min-h-0"
             >
               <div className="relative z-10 w-full md:w-3/4">
-                <MapPin className="w-10 h-10 text-[var(--c-oliveDark)] mb-6" />
-                <h3 className="text-3xl font-medium text-[var(--c-charcoal)] mb-4" style={{ fontFamily: fonts.heading }}>Zero-Click Geocoding</h3>
-                <p className="text-[var(--c-textSecondary)] text-lg">The moment a camera is opened, Nominatim reverse-geocodes the HTML5 coordinates into a strict operational Pincode.</p>
+                <Brain className="w-10 h-10 text-[var(--c-sage)] mb-6" />
+                <h3 className="text-3xl font-medium mb-4" style={{ fontFamily: fonts.heading }}>Gemini AI Triage</h3>
+                <p className="text-[var(--c-sage)] text-lg">Every uploaded photo is processed by Google Gemini Vision AI to automatically categorize the hazard and calculate an urgency severity matrix.</p>
               </div>
-              <div className="absolute right-0 bottom-0 w-64 h-64 bg-gradient-to-tl from-[var(--c-sage)] to-transparent opacity-20 rounded-tl-full blur-2xl group-hover:opacity-40 transition-opacity"></div>
+              <div className="absolute right-0 bottom-0 w-64 h-64 bg-gradient-to-tl from-[var(--c-olive)] to-transparent opacity-50 rounded-tl-full blur-2xl group-hover:opacity-80 transition-opacity"></div>
             </motion.div>
 
-            {/* Bento Block 2 - Tall Square */}
+            {/* Block 2 - Square: Zero-Click Geocoding */}
             <motion.div 
               initial="hidden" whileInView="visible" viewport={{ once: true }} variants={scaleIn}
-              className="bg-[var(--c-oliveDark)] text-white rounded-[2rem] p-8 md:p-10 flex flex-col justify-between overflow-hidden relative group min-h-[300px] md:min-h-0"
+              className="bg-[var(--c-offWhite)] rounded-[2rem] p-8 md:p-10 flex flex-col justify-between border border-[var(--c-borderLight)] overflow-hidden group hover:border-[var(--c-sage)] transition-colors min-h-[300px] md:min-h-0"
             >
               <div className="relative z-10">
-                <Cloud className="w-10 h-10 text-[var(--c-sage)] mb-6" />
-                <h3 className="text-2xl font-medium mb-4" style={{ fontFamily: fonts.heading }}>Cloud Integration</h3>
-                <p className="text-[var(--c-sage)]">Evidence is instantly uploaded to Cloudinary, shrinking payload sizes while retaining crystalline quality.</p>
+                <MapPin className="w-10 h-10 text-[var(--c-oliveDark)] mb-6" />
+                <h3 className="text-2xl font-medium text-[var(--c-charcoal)] mb-4" style={{ fontFamily: fonts.heading }}>Zero-Click GPS</h3>
+                <p className="text-[var(--c-textSecondary)]">Precise HTML5 Geolocation enforces strict zonal isolation based on coordinate capturing.</p>
               </div>
-              <div className="absolute -right-10 -top-10 w-40 h-40 bg-[var(--c-olive)] blur-3xl rounded-full opacity-50 group-hover:scale-150 transition-transform duration-700"></div>
             </motion.div>
 
-            {/* Bento Block 3 - Tall Square */}
+            {/* Block 3 - Square: Community Consensus */}
             <motion.div 
               initial="hidden" whileInView="visible" viewport={{ once: true }} variants={scaleIn}
               className="bg-[var(--c-charcoal)] text-white rounded-[2rem] p-8 md:p-10 flex flex-col justify-between overflow-hidden relative group min-h-[300px] md:min-h-0"
             >
               <div className="relative z-10">
-                <ShieldCheck className="w-10 h-10 text-[var(--c-accentGold)] mb-6" />
-                <h3 className="text-2xl font-medium mb-4" style={{ fontFamily: fonts.heading }}>Super Admin Gates</h3>
-                <p className="text-gray-400">Authorities cannot join unverified. A Super Admin must rigorously approve every municipal registration.</p>
+                <ThumbsUp className="w-10 h-10 text-[var(--c-accentGold)] mb-6" />
+                <h3 className="text-2xl font-medium mb-4" style={{ fontFamily: fonts.heading }}>Community Upvoting</h3>
+                <p className="text-gray-400">Citizens democratically elevate critical infrastructure failures through localized consensus.</p>
               </div>
             </motion.div>
 
-            {/* Bento Block 4 - Large Wide */}
+            {/* Block 4 - Wide: Quad-Department & Analytics */}
             <motion.div 
               initial="hidden" whileInView="visible" viewport={{ once: true }} variants={scaleIn}
               className="md:col-span-2 bg-gradient-to-br from-[#F4F1E1] to-white rounded-[2rem] p-8 md:p-10 flex flex-col justify-between border border-[var(--c-borderLight)] group hover:border-[var(--c-olive)] transition-colors relative overflow-hidden min-h-[300px] md:min-h-0"
             >
               <div className="relative z-10 w-full md:w-2/3">
-                <BarChart3 className="w-10 h-10 text-[var(--c-olive)] mb-6" />
-                <h3 className="text-3xl font-medium text-[var(--c-charcoal)] mb-4" style={{ fontFamily: fonts.heading }}>Interactive Analytics</h3>
-                <p className="text-[var(--c-textSecondary)] text-lg">Authority Dashboards are powered by modular Chart.js graphs, visualizing monthly resolution metrics per distinct department.</p>
+                <Users className="w-10 h-10 text-[var(--c-olive)] mb-6" />
+                <h3 className="text-3xl font-medium text-[var(--c-charcoal)] mb-4" style={{ fontFamily: fonts.heading }}>Quad-Department Routing</h3>
+                <p className="text-[var(--c-textSecondary)] text-lg">Incidents are seamlessly delegated to distinct department managers (PWD, Water, Electricity, Garbage) with interactive performance analytics.</p>
               </div>
-              {/* Abstract decorative element */}
               <div className="absolute right-10 top-1/2 -translate-y-1/2 hidden md:flex items-end gap-2 opacity-20 group-hover:opacity-100 transition-opacity duration-700">
                 <motion.div initial={{ height: "40%" }} whileHover={{ height: "80%" }} className="w-8 h-20 bg-[var(--c-oliveDark)] rounded-t-lg transition-all"></motion.div>
                 <motion.div initial={{ height: "60%" }} whileHover={{ height: "100%" }} className="w-8 h-32 bg-[var(--c-olive)] rounded-t-lg transition-all"></motion.div>
                 <motion.div initial={{ height: "80%" }} whileHover={{ height: "60%" }} className="w-8 h-40 bg-[var(--c-sage)] rounded-t-lg transition-all"></motion.div>
               </div>
+            </motion.div>
+
+            {/* Block 5 - Wide: Direct Communication */}
+            <motion.div 
+              initial="hidden" whileInView="visible" viewport={{ once: true }} variants={scaleIn}
+              className="md:col-span-2 relative bg-[var(--c-offWhite)] rounded-[2rem] p-8 md:p-10 flex flex-col justify-between border border-[var(--c-borderLight)] overflow-hidden group hover:border-[var(--c-sage)] transition-colors min-h-[300px] md:min-h-0"
+            >
+              <div className="relative z-10 w-full md:w-3/4">
+                <MessageSquare className="w-10 h-10 text-[var(--c-oliveDark)] mb-6" />
+                <h3 className="text-3xl font-medium text-[var(--c-charcoal)] mb-4" style={{ fontFamily: fonts.heading }}>Bidirectional Complaints</h3>
+                <p className="text-[var(--c-textSecondary)] text-lg">Break the bureaucratic wall. Citizens and municipal authorities can securely chat directly on active incident tickets to resolve nuances instantly.</p>
+              </div>
+              <div className="absolute right-0 bottom-0 w-64 h-64 bg-gradient-to-tl from-[var(--c-sage)] to-transparent opacity-20 rounded-tl-full blur-2xl group-hover:opacity-40 transition-opacity"></div>
+            </motion.div>
+
+            {/* Block 6 - Square: GPS Localization */}
+            <motion.div 
+              initial="hidden" whileInView="visible" viewport={{ once: true }} variants={scaleIn}
+              className="bg-[var(--c-oliveDark)] text-white rounded-[2rem] p-8 md:p-10 flex flex-col justify-between overflow-hidden relative group min-h-[300px] md:min-h-0"
+            >
+              <div className="relative z-10">
+                <Map className="w-10 h-10 text-[var(--c-sage)] mb-6" />
+                <h3 className="text-2xl font-medium mb-4" style={{ fontFamily: fonts.heading }}>Office Localization</h3>
+                <p className="text-[var(--c-sage)]">Interactive Google Maps directories pinpoint authority headquarters for citizens.</p>
+              </div>
+              <div className="absolute -right-10 -top-10 w-40 h-40 bg-[var(--c-olive)] blur-3xl rounded-full opacity-50 group-hover:scale-150 transition-transform duration-700"></div>
             </motion.div>
 
           </div>
@@ -240,7 +264,8 @@ const Landing = () => {
             <div className="md:w-2/3 flex flex-col gap-8">
               {[
                 { icon: UserCheck, title: "Citizens", desc: "No complex onboarding. Just select a home pincode and start submitting geolocation-backed evidence." },
-                { icon: Server, title: "Authorities", desc: "Logged-in officials are locked strictly to their territory. They receive live alerts and update global statuses." },
+                { icon: Server, title: "Chief Authorities", desc: "Logged-in officials are locked strictly to their territory. They receive live alerts and update global statuses." },
+                { icon: Users, title: "Department Managers", desc: "Specialized operational workflows. Managers only receive incidents assigned to their specific sub-department." },
                 { icon: Globe, title: "Administrators", desc: "Global dashboard views. Ability to revoke authority keys and analyze system-wide incident resolution speed." }
               ].map((mod, i) => (
                 <motion.div 

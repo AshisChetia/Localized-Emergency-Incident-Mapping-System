@@ -27,7 +27,7 @@ import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from "react-leaf
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import UrgencyBadge from "../../components/UrgencyBadge";
-import { downloadMonthlyCSV } from "../../utils/csvExporter";
+import { downloadMonthlyPDF } from "../../utils/pdfExporter";
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -333,10 +333,10 @@ const AuthorityDashboard = () => {
             <button
               onClick={() => {
                 try {
-                  downloadMonthlyCSV(reports);
-                  toast.success("Monthly report downloaded successfully");
+                  downloadMonthlyPDF(reports, user);
+                  toast.success("Monthly PDF downloaded successfully");
                 } catch (error) {
-                  toast.error(error.message || "Failed to download report");
+                  toast.error(error.message || "Failed to download PDF report");
                 }
               }}
               className="flex items-center gap-2 bg-[var(--c-charcoal)] hover:bg-[var(--c-oliveDark)] text-white px-4 py-2.5 rounded-full text-xs font-bold shadow-sm transition-all"

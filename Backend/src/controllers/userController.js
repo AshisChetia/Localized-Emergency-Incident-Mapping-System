@@ -1,5 +1,7 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
+import Authority from "../models/Authority.js";
+import TeamMember from "../models/TeamMember.js";
 
 // ── Update Profile ─────────────────────────
 export const updateProfile = async (req, res) => {
@@ -75,5 +77,36 @@ export const updatePassword = async (req, res) => {
   } catch (error) {
     console.error("Update Password Error:", error);
     return res.status(500).json({ message: "Server error during password update" });
+  }
+};
+
+export const getMyAuthorityDetails = async (req, res) => {
+  const { pincode } = req.user;
+
+  try {
+    if (!pincode) {
+      return res.status(400).json({ message: "User pincode is required" });
+    }
+
+    const authority = await Authority.findApprovedDetailsByPincode(pincode);
+
+    if (!authority) {
+      return res.status(200).json({
+        pincode,
+        authority: null,
+        departmentManagers: [],
+      });
+    }
+
+    const departmentManagers = await TeamMember.findByAuthority(authority.id);
+
+    return res.status(200).json({
+      pincode,
+      authority,
+      departmentManagers,
+    });
+  } catch (error) {
+    console.error("Get Authority Details Error:", error);
+    return res.status(500).json({ message: "Server error while fetching authority details" });
   }
 };

@@ -45,7 +45,7 @@ const authMiddleware = async (req, res, next) => {
       fields = "id, name, email, pincode, number";
       query  = `SELECT ${fields} FROM users WHERE id = ?`;
     } else if (role === "authority") {
-      fields = "id, name, email, pincode, is_approved";
+      fields = "id, name, email, pincode, office_location, is_approved";
       query  = `SELECT ${fields} FROM authorities WHERE id = ?`;
     } else if (role === "admin") {
       fields = "id, email";

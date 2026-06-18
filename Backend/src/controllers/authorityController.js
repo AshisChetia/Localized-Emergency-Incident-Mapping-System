@@ -42,6 +42,63 @@ export const getAuthorityProfile = async (req, res) => {
     }
 };
 
+export const updateAuthorityProfile = async (req, res) => {
+    const authorityId = req.user.id;
+    const { name, email, office_location } = req.body;
+
+    try {
+        // Build dynamic update fields (pincode is never editable)
+        const updates = {};
+
+        if (name !== undefined) {
+            const trimmedName = String(name).trim();
+            if (trimmedName.length < 2) {
+                return res.status(400).json({ message: "Name must be at least 2 characters" });
+            }
+            updates.name = trimmedName;
+        }
+
+        if (email !== undefined) {
+            const trimmedEmail = String(email).trim().toLowerCase();
+            const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+            if (!EMAIL_REGEX.test(trimmedEmail)) {
+                return res.status(400).json({ message: "Please enter a valid email address" });
+            }
+            // Check if email is already taken by another authority
+            const existingAuth = await Authority.findByEmail(trimmedEmail);
+            if (existingAuth && existingAuth.id !== authorityId) {
+                return res.status(409).json({ message: "This email is already registered to another authority" });
+            }
+            updates.email = trimmedEmail;
+        }
+
+        if (office_location !== undefined) {
+            const trimmedLocation = String(office_location).trim();
+            if (trimmedLocation.length < 3 || trimmedLocation.length > 500) {
+                return res.status(400).json({ message: "Office location is invalid" });
+            }
+            updates.office_location = trimmedLocation;
+        }
+
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({ message: "No valid fields provided for update" });
+        }
+
+        await Authority.updateProfile(authorityId, updates);
+        const authority = await Authority.findById(authorityId);
+
+        return res.status(200).json({
+            message: "Authority profile updated successfully",
+            authority: { ...authority, role: "authority" },
+        });
+    } catch (error) {
+        console.error("Update Authority Profile Error:", error);
+        return res.status(500).json({
+            message: "Server error while updating authority profile",
+        });
+    }
+};
+
 // ═════════════════════════════════════════
 //  GET AUTHORITY DASHBOARD
 //  GET /api/authority/dashboard

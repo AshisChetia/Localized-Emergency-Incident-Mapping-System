@@ -38,7 +38,6 @@ export const connectDB = async () => {
         console.warn('⚠️ Migration warning:', migErr.message);
       }
     }
-
     connection.release();
   } catch (error) {
     console.error('❌ TiDB Connection Failed:', error.message);
